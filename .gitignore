@@ -1,0 +1,42 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+venv/
+.venv/
+
+# Environment & secrets
+.env
+.env.local
+.env.*.local
+!.env.example
+
+# Node / Next.js
+node_modules/
+.next/
+out/
+*.tsbuildinfo
+next-env.d.ts
+
+# Flutter / Dart
+.dart_tool/
+build/
+.flutter-plugins
+.flutter-plugins-dependencies
+
+# Security AI artifacts
+*.h5
+*.ckpt
+checkpoints/
+
+# IDE / OS
+.idea/
+.vscode/
+*.log
+.DS_Store
+Thumbs.db
+
+# Local notes
+PROJECT_TECH_OVERVIEW.md
