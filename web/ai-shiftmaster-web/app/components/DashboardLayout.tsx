@@ -103,20 +103,20 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
   const [notificationOpen, setNotificationOpen] = useState(false);
   const router = useRouter();
   const pathname = usePathname();
-  const { user, logout, isAuthenticated } = useAuthStore();
+  const { user, logout, isAuthenticated, hasHydrated } = useAuthStore();
   const { unreadCount, fetchNotifications } = useNotificationStore();
 
   useEffect(() => {
-    if (!isAuthenticated) {
+    if (hasHydrated && !isAuthenticated) {
       router.push('/login');
     }
-  }, [isAuthenticated, router]);
+  }, [hasHydrated, isAuthenticated, router]);
 
   useEffect(() => {
-    if (isAuthenticated) {
+    if (hasHydrated && isAuthenticated) {
       fetchNotifications();
     }
-  }, [isAuthenticated, fetchNotifications]);
+  }, [hasHydrated, isAuthenticated, fetchNotifications]);
 
   const handleMenuClick = ({ key }: { key: string }) => {
     router.push(key);
@@ -162,7 +162,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
     }
   };
 
-  if (!isAuthenticated) {
+  if (!hasHydrated || !isAuthenticated) {
     return null;
   }
 

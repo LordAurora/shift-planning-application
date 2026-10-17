@@ -10,6 +10,11 @@ const apiClient: AxiosInstance = axios.create({
   timeout: 30000,
 });
 
+const clearAuthCookies = () => {
+  document.cookie = 'auth_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
+  document.cookie = 'user_role=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
+};
+
 // Request interceptor to add auth token
 apiClient.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
@@ -34,7 +39,10 @@ apiClient.interceptors.response.use(
       if (typeof window !== 'undefined') {
         localStorage.removeItem('access_token');
         localStorage.removeItem('user');
-        window.location.href = '/login';
+        clearAuthCookies();
+        if (window.location.pathname !== '/login') {
+          window.location.replace('/login');
+        }
       }
     }
     return Promise.reject(error);
