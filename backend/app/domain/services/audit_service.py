@@ -2,7 +2,7 @@
 Audit Service - Centralized audit logging with integrity verification.
 """
 from datetime import datetime
-from typing import List, Optional, Dict, Any
+from typing import List, Optional, Dict, Any, Tuple
 import logging
 import json
 
@@ -312,5 +312,3 @@ class AuditService:
         return len(errors) == 0, errors
 
 
-# Type hint helper
-from typing import Tuple

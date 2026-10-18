@@ -13,7 +13,7 @@ import logging
 import json
 import hashlib
 from dataclasses import dataclass, field
-from typing import List, Dict, Any, Optional, Callable
+from typing import List, Dict, Any, Optional, Callable, Tuple
 from datetime import datetime, timedelta
 from enum import Enum
 from pathlib import Path
