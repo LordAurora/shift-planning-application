@@ -3,10 +3,19 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 from app.config import settings
 
+
+def _normalize_db_url(url: str) -> str:
+    """Use the psycopg (v3) driver for plain postgres URLs."""
+    for prefix in ("postgresql://", "postgres://"):
+        if url.startswith(prefix):
+            return "postgresql+psycopg://" + url[len(prefix):]
+    return url
+
+
 # Create database engine
 # Compatible with both PostgreSQL and GaussDB
 engine = create_engine(
-    settings.DATABASE_URL,
+    _normalize_db_url(settings.DATABASE_URL),
     pool_pre_ping=True,
     pool_size=10,
     max_overflow=20,
