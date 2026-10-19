@@ -20,6 +20,7 @@
 ## Table of Contents
 
 - [Overview](#overview)
+- [Screenshots](#screenshots)
 - [Key Features](#key-features)
 - [Architecture](#architecture)
 - [Tech Stack](#tech-stack)
@@ -42,6 +43,33 @@ ShiftMaster AI helps organizations plan employee shifts while staying inside lab
 | **Web dashboard** (Next.js) | Admins, managers | Employees, departments, shifts, rules, AI optimization, analytics, security scanning |
 | **Mobile app** (Flutter) | Employees | Weekly shifts, leave requests, shift preferences, notifications, profile |
 | **REST API** (FastAPI) | Both clients | Auth, business rules, optimization, real-time events, health and metrics |
+
+---
+
+## Screenshots
+
+<p align="center">
+  <img src="docs/screenshots/landing.png" alt="Landing page" width="100%">
+</p>
+
+<table>
+  <tr>
+    <td width="50%"><img src="docs/screenshots/dashboard.png" alt="Dashboard"><p align="center"><b>Dashboard</b>: workforce KPIs, weekly shift distribution and department breakdown</p></td>
+    <td width="50%"><img src="docs/screenshots/shifts.png" alt="Shift management"><p align="center"><b>Shift management</b>: list and calendar views, filtered by date range and department</p></td>
+  </tr>
+  <tr>
+    <td><img src="docs/screenshots/ai-optimization.png" alt="AI optimization"><p align="center"><b>AI optimization</b>: generate a schedule that takes employee preferences into account</p></td>
+    <td><img src="docs/screenshots/employees.png" alt="Employee management"><p align="center"><b>Employees</b>: weekly and overtime limits, plus availability</p></td>
+  </tr>
+  <tr>
+    <td><img src="docs/screenshots/rules.png" alt="Shift rules"><p align="center"><b>Shift rules</b>: staffing requirements per department and day</p></td>
+    <td><img src="docs/screenshots/login.png" alt="Login"><p align="center"><b>Login</b>: JWT-based authentication</p></td>
+  </tr>
+  <tr>
+    <td><img src="docs/screenshots/security-dashboard.png" alt="Security AI dashboard"><p align="center"><b>Security AI dashboard</b>: severity distribution and detection sources</p></td>
+    <td><img src="docs/screenshots/security-scan.png" alt="Vulnerability scanner"><p align="center"><b>Vulnerability scanner</b>: hybrid rule + ML code analysis</p></td>
+  </tr>
+</table>
 
 ---
 
@@ -323,7 +351,9 @@ erDiagram
 
 ## Roadmap
 
-- [ ] Connect the web **Shift Rules** page and **registration** flow to the live backend endpoints.
+- [ ] Connect the web **Shift Rules**, **registration** and **Security AI dashboard** views to the live backend endpoints. They currently show sample data.
+- [ ] Make the web **AI Optimization** page call the backend optimizer (`/ai/optimize`, `/shifts/v2/optimized`) instead of generating the schedule in the browser.
+- [ ] Add a complete Alembic migration chain. Revision `002` is missing.
 - [ ] Ship trained weights for the Security AI ML model. Until then, the detector runs in rule-based mode.
 - [ ] Add an automated test suite (pytest, Playwright, Flutter widget tests) and a CI pipeline.
 - [ ] Add Docker Compose for one-command local setup.
