@@ -12,7 +12,7 @@ import sys
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from app.config import settings
-from app.database import Base
+from app.database import Base, normalize_db_url
 
 # Import all models to ensure they're registered with Base
 from app.models.user import User
@@ -22,12 +22,14 @@ from app.models.shift import Shift
 from app.models.shift_rule import ShiftRule
 from app.models.notification import Notification
 from app.models.audit_log import AuditLog
+from app.models.leave_request import LeaveRequest
+from app.models.security_scan import SecurityScan
 
 # this is the Alembic Config object
 config = context.config
 
 # Override sqlalchemy.url with environment variable
-config.set_main_option("sqlalchemy.url", settings.DATABASE_URL)
+config.set_main_option("sqlalchemy.url", normalize_db_url(settings.DATABASE_URL))
 
 # Interpret the config file for Python logging.
 if config.config_file_name is not None:
