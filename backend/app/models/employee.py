@@ -21,6 +21,12 @@ class Employee(Base):
     # Working hours limits
     weekly_working_limit = Column(Float, default=40.0)  # Hours per week
     overtime_limit = Column(Float, default=10.0)  # Maximum overtime hours per week
+
+    # Scheduling preferences used by the optimizer
+    # Format: {"preferred_shift": "morning|day|afternoon|night",
+    #          "weekly_off_day": 0-6 (Sunday-Saturday),
+    #          "work_model": "office|remote|hybrid"}
+    preferences = Column(JSON, default=dict)
     
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())

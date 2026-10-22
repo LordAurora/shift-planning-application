@@ -9,6 +9,12 @@ class AvailabilitySlot(BaseModel):
     end_time: str  # HH:MM format
 
 
+class EmployeePreferences(BaseModel):
+    preferred_shift: Optional[str] = None  # morning | day | afternoon | night
+    weekly_off_day: Optional[int] = None  # 0-6 (Sunday-Saturday)
+    work_model: Optional[str] = None  # office | remote | hybrid
+
+
 class EmployeeBase(BaseModel):
     name: str
     email: EmailStr
@@ -17,6 +23,7 @@ class EmployeeBase(BaseModel):
     availability: List[AvailabilitySlot] = []
     weekly_working_limit: float = 40.0
     overtime_limit: float = 10.0
+    preferences: Optional[EmployeePreferences] = None
 
 
 class EmployeeCreate(EmployeeBase):
@@ -31,6 +38,7 @@ class EmployeeUpdate(BaseModel):
     availability: Optional[List[AvailabilitySlot]] = None
     weekly_working_limit: Optional[float] = None
     overtime_limit: Optional[float] = None
+    preferences: Optional[EmployeePreferences] = None
     password: Optional[str] = None  # Optional password update
 
 

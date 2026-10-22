@@ -61,6 +61,7 @@ async def get_employees(
             "availability": emp.availability or [],
             "weekly_working_limit": emp.weekly_working_limit,
             "overtime_limit": emp.overtime_limit,
+            "preferences": emp.preferences or None,
             "created_at": emp.created_at,
             "updated_at": emp.updated_at
         }
@@ -100,6 +101,7 @@ async def get_employee(
         availability=employee.availability or [],
         weekly_working_limit=employee.weekly_working_limit,
         overtime_limit=employee.overtime_limit,
+        preferences=employee.preferences or None,
         created_at=employee.created_at,
         updated_at=employee.updated_at
     )
@@ -159,7 +161,8 @@ async def create_employee(
         department_id=employee_data.department_id,
         availability=availability_data,
         weekly_working_limit=employee_data.weekly_working_limit,
-        overtime_limit=employee_data.overtime_limit
+        overtime_limit=employee_data.overtime_limit,
+        preferences=employee_data.preferences.model_dump() if employee_data.preferences else {},
     )
     
     db.add(employee)
@@ -176,6 +179,7 @@ async def create_employee(
         availability=employee.availability or [],
         weekly_working_limit=employee.weekly_working_limit,
         overtime_limit=employee.overtime_limit,
+        preferences=employee.preferences or None,
         created_at=employee.created_at,
         updated_at=employee.updated_at
     )
@@ -206,6 +210,11 @@ async def update_employee(
             user.hashed_password = pwd_context.hash(update_data["password"])
         del update_data["password"]
     
+    # Store preferences as plain JSON
+    if "preferences" in update_data and update_data["preferences"] is not None:
+        prefs = update_data["preferences"]
+        update_data["preferences"] = prefs.model_dump() if hasattr(prefs, "model_dump") else prefs
+
     # Handle availability conversion
     if "availability" in update_data and update_data["availability"]:
         update_data["availability"] = [slot.model_dump() if hasattr(slot, 'model_dump') else slot for slot in update_data["availability"]]
@@ -244,6 +253,7 @@ async def update_employee(
         availability=employee.availability or [],
         weekly_working_limit=employee.weekly_working_limit,
         overtime_limit=employee.overtime_limit,
+        preferences=employee.preferences or None,
         created_at=employee.created_at,
         updated_at=employee.updated_at
     )

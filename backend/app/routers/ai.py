@@ -1,153 +1,53 @@
-from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy.orm import Session
-from typing import List
+from fastapi import APIRouter, Depends
+from sqlalchemy.orm import Session, joinedload
 from datetime import datetime, timedelta
-import random
 from app.database import get_db
 from app.models.shift import Shift
-from app.models.shift_rule import ShiftRule
 from app.models.employee import Employee
-from app.models.department import Department
 from app.models.user import User
-from app.schemas.ai import OptimizationRequest, OptimizationResult, ApplyOptimizationRequest
-from app.schemas.shift import ShiftResponse, ShiftConflict, ShiftStatus
-from app.utils.security import get_current_user, require_role
+from app.domain.services.schedule_optimizer import (
+    EmployeeInput,
+    ExistingShift,
+    OptimizerSettings,
+    ScheduleOptimizer,
+)
+from app.schemas.ai import (
+    ApplyOptimizationRequest,
+    OptimizationMetrics,
+    OptimizationRequest,
+    OptimizationResult,
+    OptimizedShift,
+)
+from app.schemas.shift import ShiftConflict, ShiftStatus
+from app.utils.security import require_role
 
 router = APIRouter(prefix="/ai", tags=["AI Optimization"])
 
+DAY_NAMES = ["sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday"]
 
-def generate_optimized_shifts(
-    db: Session,
-    start_date: datetime,
-    end_date: datetime,
-    department_ids: List[int] = None
-) -> tuple[List[dict], List[ShiftConflict], float]:
-    """
-    Generate optimized shifts based on rules and employee availability.
-    
-    This is a placeholder implementation that demonstrates the API structure.
-    In production, this would integrate with an actual AI/optimization engine.
-    """
-    shifts = []
-    conflicts = []
-    
-    # Get active rules
-    rules_query = db.query(ShiftRule).filter(ShiftRule.is_active == True)
-    if department_ids:
-        rules_query = rules_query.filter(ShiftRule.department_id.in_(department_ids))
-    rules = rules_query.all()
-    
-    # Get employees
-    employees_query = db.query(Employee)
-    if department_ids:
-        employees_query = employees_query.filter(Employee.department_id.in_(department_ids))
-    employees = employees_query.all()
-    
-    if not employees:
-        return [], [], 0.0
-    
-    # Track weekly hours per employee
-    employee_hours = {emp.id: 0.0 for emp in employees}
-    
-    shift_id_counter = 1000
-    current_date = start_date
-    
-    while current_date <= end_date:
-        day_of_week = current_date.weekday()
-        # Convert Python weekday (0=Monday) to our format (0=Sunday)
-        day_of_week_adjusted = (day_of_week + 1) % 7
-        
-        for rule in rules:
-            if day_of_week_adjusted not in (rule.days_of_week or []):
-                continue
-            
-            # Find eligible employees for this rule
-            eligible_employees = [
-                emp for emp in employees
-                if emp.department_id == rule.department_id
-                and (rule.role == "Any" or emp.role == rule.role)
-            ]
-            
-            if not eligible_employees:
-                continue
-            
-            # Calculate shift duration
-            shift_start = datetime.combine(current_date.date(), rule.start_time)
-            shift_end = datetime.combine(current_date.date(), rule.end_time)
-            if rule.end_time < rule.start_time:
-                shift_end += timedelta(days=1)
-            shift_duration = (shift_end - shift_start).total_seconds() / 3600
-            
-            # Assign employees (simplified logic)
-            num_to_assign = random.randint(rule.min_employees, rule.max_employees)
-            assigned = 0
-            
-            # Sort by hours worked (assign to those with fewer hours first)
-            sorted_employees = sorted(eligible_employees, key=lambda e: employee_hours[e.id])
-            
-            for emp in sorted_employees:
-                if assigned >= num_to_assign:
-                    break
-                
-                # Check if employee would exceed weekly limit
-                potential_hours = employee_hours[emp.id] + shift_duration
-                max_hours = emp.weekly_working_limit + emp.overtime_limit
-                
-                if potential_hours > max_hours:
-                    continue
-                
-                # Check availability (simplified - just check day of week)
-                available_days = [slot.get('day') for slot in (emp.availability or [])]
-                if available_days and day_of_week_adjusted not in available_days:
-                    continue
-                
-                # Create shift
-                department = db.query(Department).filter(Department.id == emp.department_id).first()
-                
-                shift_data = {
-                    "id": shift_id_counter,
-                    "employee_id": emp.id,
-                    "employee_name": emp.name,
-                    "department_id": emp.department_id,
-                    "department_name": department.name if department else None,
-                    "start_time": shift_start,
-                    "end_time": shift_end,
-                    "status": ShiftStatus.SCHEDULED,
-                    "created_at": datetime.now(),
-                    "updated_at": datetime.now()
-                }
-                shifts.append(shift_data)
-                
-                employee_hours[emp.id] += shift_duration
-                shift_id_counter += 1
-                assigned += 1
-                
-                # Check for overtime warning
-                if employee_hours[emp.id] > emp.weekly_working_limit:
-                    overtime = employee_hours[emp.id] - emp.weekly_working_limit
-                    if overtime > 0:
-                        conflicts.append(ShiftConflict(
-                            type="overtime",
-                            message=f"{emp.name} has {overtime:.1f}h overtime this period",
-                            employee_id=emp.id,
-                            shift_ids=[shift_id_counter - 1]
-                        ))
-        
-        current_date += timedelta(days=1)
-    
-    # Calculate optimization score (simplified)
-    # Higher score = better distribution of shifts
-    if not shifts:
-        optimization_score = 0.0
-    else:
-        # Score based on how evenly shifts are distributed
-        total_employees = len(employees)
-        shifts_per_employee = len(shifts) / max(total_employees, 1)
-        variance = sum((employee_hours[emp.id] - sum(employee_hours.values()) / max(total_employees, 1)) ** 2 
-                      for emp in employees) / max(total_employees, 1)
-        optimization_score = max(0, min(100, 100 - variance))
-    
-    return shifts, conflicts, optimization_score
+
+def _to_local_naive(value: datetime) -> datetime:
+    """Schedules are planned in local wall-clock time."""
+    return value.astimezone().replace(tzinfo=None) if value.tzinfo else value
+
+
+def _employee_input(emp: Employee) -> EmployeeInput:
+    prefs = emp.preferences or {}
+    off_day = prefs.get("weekly_off_day")
+    if isinstance(off_day, str):
+        off_day = DAY_NAMES.index(off_day.lower()) if off_day.lower() in DAY_NAMES else None
+    available = {slot.get("day") for slot in (emp.availability or []) if isinstance(slot, dict)}
+    return EmployeeInput(
+        id=emp.id,
+        name=emp.name,
+        department_id=emp.department_id,
+        department_name=emp.department.name if emp.department else None,
+        weekly_limit=emp.weekly_working_limit or 40.0,
+        overtime_limit=emp.overtime_limit or 0.0,
+        available_days=available or None,
+        preferred_shift=prefs.get("preferred_shift"),
+        weekly_off_day=off_day,
+    )
 
 
 @router.post("/optimize", response_model=OptimizationResult)
@@ -157,29 +57,82 @@ async def optimize_shifts(
     current_user: User = Depends(require_role(["admin", "manager"]))
 ):
     """
-    Generate optimized shift schedule using AI.
-    
-    This endpoint analyzes employee availability, shift rules, and constraints
-    to produce an optimal shift schedule for the specified date range.
+    Generate an optimized shift schedule (preview only, nothing is saved).
+
+    The optimizer respects weekly hour caps, rest periods, consecutive-day limits,
+    availability and days off, then ranks candidates by shift preference and
+    workload balance. Existing shifts in the period are taken into account.
     """
-    start_datetime = datetime.combine(request.start_date, datetime.min.time())
-    end_datetime = datetime.combine(request.end_date, datetime.max.time())
-    
-    shifts, conflicts, score = generate_optimized_shifts(
-        db,
-        start_datetime,
-        end_datetime,
-        request.department_ids
+    query = db.query(Employee).options(joinedload(Employee.department))
+    if request.department_ids:
+        query = query.filter(Employee.department_id.in_(request.department_ids))
+    employees = query.all()
+
+    if not employees:
+        return OptimizationResult(
+            shifts=[], conflicts=[], optimization_score=0.0,
+            message="No employees found for the selected departments.",
+        )
+
+    # Existing shifts (including the week before) count towards hours and rest periods
+    window_start = datetime.combine(request.start_date - timedelta(days=7), datetime.min.time())
+    window_end = datetime.combine(request.end_date + timedelta(days=1), datetime.min.time())
+    existing_rows = (
+        db.query(Shift)
+        .filter(
+            Shift.employee_id.in_([e.id for e in employees]),
+            Shift.status != ShiftStatus.CANCELLED,
+            Shift.start_time >= window_start,
+            Shift.start_time < window_end,
+        )
+        .all()
     )
-    
-    # Convert to response format
-    shift_responses = [ShiftResponse(**shift) for shift in shifts]
-    
+    existing = [
+        ExistingShift(s.employee_id, _to_local_naive(s.start_time), _to_local_naive(s.end_time), s.department_id)
+        for s in existing_rows
+    ]
+
+    settings = OptimizerSettings(**request.settings.model_dump())
+    outcome = ScheduleOptimizer(settings).optimize(
+        [_employee_input(e) for e in employees],
+        request.start_date,
+        request.end_date,
+        existing,
+    )
+
+    now = datetime.now()
+    shifts = [
+        OptimizedShift(
+            id=-(index + 1),  # temporary ids until the schedule is applied
+            employee_id=a.employee_id,
+            employee_name=a.employee_name,
+            department_id=a.department_id,
+            department_name=a.department_name,
+            start_time=a.start,
+            end_time=a.end,
+            status=ShiftStatus.SCHEDULED,
+            shift_type=a.shift_type,
+            preferred=a.preferred,
+            created_at=now,
+            updated_at=now,
+        )
+        for index, a in enumerate(outcome.assignments)
+    ]
+    conflicts = [
+        ShiftConflict(type=w.type, message=w.message, employee_id=w.employee_id, shift_ids=[])
+        for w in outcome.warnings
+    ]
+    metrics = {k: v for k, v in outcome.metrics.items() if k != "score"}
+
     return OptimizationResult(
-        shifts=shift_responses,
+        shifts=shifts,
         conflicts=conflicts,
-        optimization_score=round(score, 1),
-        message=f"Generated {len(shifts)} shifts with {len(conflicts)} warning(s)."
+        optimization_score=outcome.score,
+        metrics=OptimizationMetrics(**metrics),
+        message=(
+            f"Generated {len(shifts)} shifts for {metrics['employees_scheduled']} employees "
+            f"with {len(conflicts)} warning(s)."
+        ),
     )
 
 
@@ -195,28 +148,21 @@ async def apply_optimization(
     This endpoint takes the generated shifts from the optimization
     and creates them in the database.
     """
-    created_shifts = []
-    
-    for shift_data in request.shifts:
-        # Create actual shift in database
-        shift = Shift(
+    created = [
+        Shift(
             employee_id=shift_data.employee_id,
             department_id=shift_data.department_id,
-            start_time=shift_data.start_time,
-            end_time=shift_data.end_time,
-            status=shift_data.status
+            # Naive timestamps come from the optimizer preview and are local wall-clock time
+            start_time=shift_data.start_time if shift_data.start_time.tzinfo else shift_data.start_time.astimezone(),
+            end_time=shift_data.end_time if shift_data.end_time.tzinfo else shift_data.end_time.astimezone(),
+            status=shift_data.status,
         )
-        
-        db.add(shift)
-        created_shifts.append(shift)
-    
+        for shift_data in request.shifts
+    ]
+    db.add_all(created)
     db.commit()
-    
-    # Refresh to get IDs
-    for shift in created_shifts:
-        db.refresh(shift)
-    
+
     return {
-        "message": f"Successfully created {len(created_shifts)} shifts",
-        "shift_ids": [shift.id for shift in created_shifts]
+        "message": f"Successfully created {len(created)} shifts",
+        "created_count": len(created),
     }
