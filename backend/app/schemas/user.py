@@ -1,4 +1,4 @@
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, EmailStr, Field
 from typing import Optional
 from datetime import datetime
 from enum import Enum
@@ -18,6 +18,13 @@ class UserBase(BaseModel):
 
 class UserCreate(UserBase):
     password: str
+
+
+class RegisterRequest(BaseModel):
+    """Public self-service sign-up. The role is decided by the server."""
+    email: EmailStr
+    name: str = Field(..., min_length=2, max_length=255)
+    password: str = Field(..., min_length=8, max_length=128)
 
 
 class UserUpdate(BaseModel):

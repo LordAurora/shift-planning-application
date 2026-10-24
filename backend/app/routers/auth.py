@@ -3,11 +3,11 @@ from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
 from datetime import timedelta
 from app.database import get_db
-from app.models.user import User
+from app.models.user import User, UserRole
 from app.schemas.user import (
     Token, 
     LoginRequest, 
-    UserCreate, 
+    RegisterRequest,
     UserResponse
 )
 from app.utils.security import (
@@ -108,29 +108,33 @@ async def get_current_user_info(current_user: User = Depends(get_current_user)):
     )
 
 
-@router.post("/register", response_model=UserResponse)
+@router.post("/register", response_model=UserResponse, status_code=status.HTTP_201_CREATED)
 async def register(
-    user_data: UserCreate,
+    user_data: RegisterRequest,
     db: Session = Depends(get_db)
 ):
-    """Register a new user (for development/testing)"""
-    # Check if email already exists
+    """
+    Self-service sign-up.
+
+    The role cannot be chosen by the client: the very first account becomes the
+    administrator (bootstrap), every later sign-up is an employee. Elevated roles
+    are granted by an administrator.
+    """
     existing_user = db.query(User).filter(User.email == user_data.email).first()
     if existing_user:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Email already registered"
         )
-    
-    # Create new user
-    hashed_password = get_password_hash(user_data.password)
+
+    is_first_user = db.query(User).count() == 0
     user = User(
         email=user_data.email,
         name=user_data.name,
-        hashed_password=hashed_password,
-        role=user_data.role
+        hashed_password=get_password_hash(user_data.password),
+        role=UserRole.ADMIN if is_first_user else UserRole.EMPLOYEE,
     )
-    
+
     db.add(user)
     db.commit()
     db.refresh(user)
