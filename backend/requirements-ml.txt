@@ -1,0 +1,4 @@
+# Optional: ML layer of the Security AI module.
+# Without it, scans run in rule-based mode.
+-r requirements.txt
+tensorflow>=2.13.0

@@ -19,9 +19,10 @@ kombu==5.3.4
 # Monitoring & Observability
 psutil==5.9.8
 
-# AI/ML Security Analysis
-tensorflow>=2.13.0
+# Security AI rule engine
 numpy>=1.24.0
+
+# The optional ML layer (TensorFlow) lives in requirements-ml.txt
 
 # Optional: Firebase Admin for push notifications
 # firebase-admin==6.4.0
