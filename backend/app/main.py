@@ -14,6 +14,8 @@ from app.models.shift import Shift
 from app.models.shift_rule import ShiftRule
 from app.models.notification import Notification
 from app.models.audit_log import AuditLog
+from app.models.leave_request import LeaveRequest  # noqa: F401
+from app.models.security_scan import SecurityScan  # noqa: F401
 from app.utils.security import get_password_hash
 
 # Import middleware
@@ -31,7 +33,8 @@ from app.routers import leave_requests
 from app.routers import health
 from app.routers import events
 from app.routers import shifts_enhanced, leave_enhanced
-from app.routers import security
+from app.routers import security, security_scans
+from app.routers import dashboard
 
 
 def create_initial_data(db):
@@ -307,6 +310,7 @@ app.include_router(departments.router, prefix="/api/v1")
 app.include_router(shifts.router, prefix="/api/v1")
 app.include_router(rules.router, prefix="/api/v1")
 app.include_router(ai.router, prefix="/api/v1")
+app.include_router(dashboard.router, prefix="/api/v1")
 app.include_router(notifications.router, prefix="/api/v1")
 app.include_router(leave_requests.router, prefix="/api/v1")
 app.include_router(events.router, prefix="/api/v1")  # SSE real-time events
@@ -316,6 +320,7 @@ app.include_router(shifts_enhanced.router, prefix="/api/v1")  # Enhanced shifts 
 app.include_router(leave_enhanced.router, prefix="/api/v1")  # Enhanced leave with auto-approval
 
 # Security AI Analysis endpoints
+app.include_router(security_scans.router, prefix="/api/v1")  # Persisted scans + dashboard stats
 app.include_router(security.router, prefix="/api/v1")  # Security vulnerability scanning
 
 
