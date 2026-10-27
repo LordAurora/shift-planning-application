@@ -28,7 +28,8 @@ import {
 } from '@ant-design/icons';
 import type { ColumnsType } from 'antd/es/table';
 import DashboardLayout from '../components/DashboardLayout';
-import { ShiftRule } from '../types';
+import { Department, ShiftRule } from '../types';
+import { departmentService, shiftRuleService } from '../lib/services';
 import dayjs from 'dayjs';
 
 const { Title } = Typography;
@@ -44,77 +45,31 @@ const DAYS_OF_WEEK = [
   { value: 6, label: 'Saturday', short: 'Sat' },
 ];
 
-const ROLES = ['Developer', 'Manager', 'Analyst', 'Designer', 'Support', 'Administrator', 'Any'];
-
-const mockDepartments = [
-  { id: 1, name: 'Engineering' },
-  { id: 2, name: 'Operations' },
-  { id: 3, name: 'Customer Service' },
-  { id: 4, name: 'HR' },
+const ROLES = [
+  'Any',
+  'Software Engineer',
+  'QA Engineer',
+  'DevOps Engineer',
+  'Developer',
+  'Operations Specialist',
+  'Logistics Coordinator',
+  'Support Specialist',
+  'Support Team Lead',
+  'Support',
+  'HR Specialist',
+  'Recruiter',
+  'Accountant',
+  'Financial Analyst',
+  'Manager',
 ];
 
-const mockRules: ShiftRule[] = [
-  {
-    id: 1,
-    name: 'Morning Shift - Engineering',
-    department_id: 1,
-    department_name: 'Engineering',
-    role: 'Developer',
-    start_time: '09:00',
-    end_time: '17:00',
-    min_employees: 2,
-    max_employees: 5,
-    days_of_week: [1, 2, 3, 4, 5],
-    is_active: true,
-    created_at: '2025-01-01',
-  },
-  {
-    id: 2,
-    name: 'Support Shift',
-    department_id: 3,
-    department_name: 'Customer Service',
-    role: 'Support',
-    start_time: '08:00',
-    end_time: '20:00',
-    min_employees: 3,
-    max_employees: 8,
-    days_of_week: [0, 1, 2, 3, 4, 5, 6],
-    is_active: true,
-    created_at: '2025-01-01',
-  },
-  {
-    id: 3,
-    name: 'Operations Day Shift',
-    department_id: 2,
-    department_name: 'Operations',
-    role: 'Any',
-    start_time: '06:00',
-    end_time: '14:00',
-    min_employees: 4,
-    max_employees: 10,
-    days_of_week: [1, 2, 3, 4, 5],
-    is_active: true,
-    created_at: '2025-01-02',
-  },
-  {
-    id: 4,
-    name: 'Weekend Coverage',
-    department_id: 2,
-    department_name: 'Operations',
-    role: 'Any',
-    start_time: '10:00',
-    end_time: '18:00',
-    min_employees: 2,
-    max_employees: 4,
-    days_of_week: [0, 6],
-    is_active: false,
-    created_at: '2025-01-03',
-  },
-];
+const hhmm = (value: string) => value?.slice(0, 5);
 
 export default function RulesPage() {
-  const [rules, setRules] = useState<ShiftRule[]>(mockRules);
+  const [rules, setRules] = useState<ShiftRule[]>([]);
+  const [departments, setDepartments] = useState<Department[]>([]);
   const [loading, setLoading] = useState(false);
+  const [saving, setSaving] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
   const [editingRule, setEditingRule] = useState<ShiftRule | null>(null);
   const [selectedDepartment, setSelectedDepartment] = useState<number | undefined>(undefined);
@@ -123,26 +78,31 @@ export default function RulesPage() {
   const fetchRules = async () => {
     setLoading(true);
     try {
-      let filtered = mockRules;
-      if (selectedDepartment) {
-        filtered = filtered.filter((r) => r.department_id === selectedDepartment);
-      }
-      setRules(filtered);
-    } catch (error) {
-      message.error('Failed to fetch shift rules');
+      const data = await shiftRuleService.getAll(
+        selectedDepartment ? { department_id: selectedDepartment } : undefined
+      );
+      setRules(data.map((r) => ({ ...r, start_time: hhmm(r.start_time), end_time: hhmm(r.end_time) })));
+    } catch {
+      message.error('Failed to load shift rules');
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
+    departmentService.getAll().then(setDepartments).catch(() => message.error('Failed to load departments'));
+  }, []);
+
+  useEffect(() => {
     fetchRules();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedDepartment]);
 
   const handleCreate = () => {
     setEditingRule(null);
     form.resetFields();
     form.setFieldsValue({
+      role: 'Any',
       min_employees: 1,
       max_employees: 5,
       days_of_week: [1, 2, 3, 4, 5],
@@ -165,60 +125,56 @@ export default function RulesPage() {
 
   const handleDelete = async (id: number) => {
     try {
-      setRules(rules.filter((r) => r.id !== id));
-      message.success('Shift rule deleted successfully');
-    } catch (error) {
+      await shiftRuleService.delete(id);
+      setRules((prev) => prev.filter((r) => r.id !== id));
+      message.success('Shift rule deleted');
+    } catch {
       message.error('Failed to delete shift rule');
     }
   };
 
   const handleToggleActive = async (id: number, is_active: boolean) => {
     try {
-      setRules(
-        rules.map((r) => (r.id === id ? { ...r, is_active } : r))
-      );
-      message.success(`Rule ${is_active ? 'activated' : 'deactivated'} successfully`);
-    } catch (error) {
+      await shiftRuleService.update(id, { is_active });
+      setRules((prev) => prev.map((r) => (r.id === id ? { ...r, is_active } : r)));
+      message.success(`Rule ${is_active ? 'activated' : 'deactivated'}`);
+    } catch {
       message.error('Failed to update rule status');
     }
   };
 
   const handleSubmit = async (values: Record<string, unknown>) => {
+    const ruleData: Partial<ShiftRule> = {
+      name: values.name as string,
+      department_id: values.department_id as number,
+      role: values.role as string,
+      start_time: (values.start_time as dayjs.Dayjs).format('HH:mm'),
+      end_time: (values.end_time as dayjs.Dayjs).format('HH:mm'),
+      min_employees: values.min_employees as number,
+      max_employees: values.max_employees as number,
+      days_of_week: values.days_of_week as number[],
+      is_active: values.is_active as boolean,
+    };
+    if (ruleData.min_employees! > ruleData.max_employees!) {
+      message.warning('Minimum employees cannot exceed maximum employees');
+      return;
+    }
+    setSaving(true);
     try {
-      const department = mockDepartments.find((d) => d.id === values.department_id);
-
-      const ruleData: Partial<ShiftRule> = {
-        name: values.name as string,
-        department_id: values.department_id as number,
-        department_name: department?.name,
-        role: values.role as string,
-        start_time: (values.start_time as dayjs.Dayjs).format('HH:mm'),
-        end_time: (values.end_time as dayjs.Dayjs).format('HH:mm'),
-        min_employees: values.min_employees as number,
-        max_employees: values.max_employees as number,
-        days_of_week: values.days_of_week as number[],
-        is_active: values.is_active as boolean,
-      };
-
       if (editingRule) {
-        const updated = rules.map((r) =>
-          r.id === editingRule.id ? { ...r, ...ruleData } : r
-        );
-        setRules(updated);
-        message.success('Shift rule updated successfully');
+        await shiftRuleService.update(editingRule.id, ruleData);
+        message.success('Shift rule updated');
       } else {
-        const newRule: ShiftRule = {
-          ...ruleData,
-          id: Math.max(...rules.map((r) => r.id)) + 1,
-          created_at: new Date().toISOString(),
-        } as ShiftRule;
-        setRules([...rules, newRule]);
-        message.success('Shift rule created successfully');
+        await shiftRuleService.create(ruleData);
+        message.success('Shift rule created');
       }
       setModalVisible(false);
       form.resetFields();
-    } catch (error) {
+      fetchRules();
+    } catch {
       message.error('Failed to save shift rule');
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -315,7 +271,7 @@ export default function RulesPage() {
                 onChange={setSelectedDepartment}
                 allowClear
               >
-                {mockDepartments.map((dept) => (
+                {departments.map((dept) => (
                   <Option key={dept.id} value={dept.id}>
                     {dept.name}
                   </Option>
@@ -366,7 +322,7 @@ export default function RulesPage() {
                   rules={[{ required: true, message: 'Please select department' }]}
                 >
                   <Select placeholder="Select department">
-                    {mockDepartments.map((dept) => (
+                    {departments.map((dept) => (
                       <Option key={dept.id} value={dept.id}>
                         {dept.name}
                       </Option>
@@ -456,7 +412,7 @@ export default function RulesPage() {
             <Form.Item style={{ marginBottom: 0, marginTop: 24 }}>
               <Space style={{ float: 'right' }}>
                 <Button onClick={() => setModalVisible(false)}>Cancel</Button>
-                <Button type="primary" htmlType="submit">
+                <Button type="primary" htmlType="submit" loading={saving}>
                   {editingRule ? 'Update' : 'Create'}
                 </Button>
               </Space>

@@ -168,6 +168,13 @@ export default function MigrationStatusPage() {
 
   return (
     <div style={{ padding: 24 }}>
+      <Alert
+        type="warning"
+        showIcon
+        style={{ marginBottom: 16 }}
+        title="Preview — sample data"
+        description="This page previews the MindSpore / ModelArts migration plan (backend/app/security_ai/migration). Status values are illustrative sample data."
+      />
       {/* Header */}
       <div style={{ marginBottom: 24, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <div>

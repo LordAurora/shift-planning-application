@@ -30,6 +30,10 @@ export const authService = {
     const response = await apiClient.get('/auth/me');
     return response.data;
   },
+  register: async (data: { name: string; email: string; password: string }) => {
+    const response = await apiClient.post('/auth/register', data);
+    return response.data;
+  },
 };
 
 // Employee Services
@@ -151,8 +155,39 @@ export const aiService = {
     const response = await apiClient.post<OptimizationResult>('/ai/optimize', data);
     return response.data;
   },
-  applyOptimization: async (shifts: Shift[]): Promise<ApiResponse<Shift[]>> => {
-    const response = await apiClient.post<ApiResponse<Shift[]>>('/ai/apply', { shifts });
+  applyOptimization: async (shifts: Shift[]): Promise<{ message: string; created_count: number }> => {
+    const response = await apiClient.post('/ai/apply', { shifts }, { timeout: 120000 });
+    return response.data;
+  },
+};
+
+// Dashboard Services
+export interface DashboardSummary {
+  period: { start_date: string; end_date: string };
+  total_employees: number;
+  total_departments: number;
+  total_shifts: number;
+  total_hours: number;
+  employees_scheduled: number;
+  over_contract: number;
+  cancelled_shifts: number;
+  by_weekday: { name: string; shifts: number; hours: number; employees: number }[];
+  shift_types: { name: string; value: number }[];
+  departments: { name: string; value: number }[];
+  monthly_trend: { month: string; scheduled: number; completed: number; cancelled: number }[];
+  upcoming_shifts: {
+    id: number;
+    employee: string | null;
+    department: string | null;
+    start_time: string;
+    end_time: string;
+    status: string;
+  }[];
+}
+
+export const dashboardService = {
+  getSummary: async (params: { start_date: string; end_date: string }): Promise<DashboardSummary> => {
+    const response = await apiClient.get<DashboardSummary>('/dashboard/summary', { params });
     return response.data;
   },
 };
@@ -190,6 +225,7 @@ import {
   MigrationStatus,
   SecurityDashboardStats,
   Vulnerability,
+  EngineRule,
 } from '../types';
 
 /**
@@ -199,8 +235,29 @@ export const securityScanService = {
   /**
    * Run a security scan with hybrid detection
    */
-  runScan: async (data: SecurityScanRequest): Promise<SecurityScanResult> => {
-    const response = await apiClient.post<SecurityScanResult>('/security/scan', data);
+  runScan: async (data: {
+    content: string;
+    filename?: string;
+    language?: string;
+    detection_mode: 'full' | 'rules_only' | 'critical_only';
+  }): Promise<SecurityScanResult> => {
+    const response = await apiClient.post<SecurityScanResult>('/security/scans', data);
+    return response.data;
+  },
+
+  /**
+   * Recent persisted scans
+   */
+  getRecentScans: async (limit = 20): Promise<SecurityScanResult[]> => {
+    const response = await apiClient.get<SecurityScanResult[]>('/security/scans', { params: { limit } });
+    return response.data;
+  },
+
+  /**
+   * Rules loaded in the detection engine
+   */
+  getEngineRules: async (): Promise<EngineRule[]> => {
+    const response = await apiClient.get<EngineRule[]>('/security/engine/rules');
     return response.data;
   },
 

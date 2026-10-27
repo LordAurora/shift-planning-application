@@ -2,88 +2,48 @@
 
 import React, { useEffect, useState } from 'react';
 import {
+  Alert,
+  Button,
   Card,
-  Row,
   Col,
+  Empty,
+  Progress,
+  Row,
+  Space,
+  Spin,
   Statistic,
   Table,
   Tag,
-  Progress,
   Typography,
-  Space,
-  Alert,
-  Spin,
-  Button,
-  Tooltip,
 } from 'antd';
 import {
-  SecurityScanOutlined,
   BugOutlined,
-  CheckCircleOutlined,
-  WarningOutlined,
-  CloseCircleOutlined,
-  RobotOutlined,
-  CodeOutlined,
   CloudServerOutlined,
+  CodeOutlined,
+  FireOutlined,
   ReloadOutlined,
-  RightOutlined,
+  RobotOutlined,
+  SafetyCertificateOutlined,
+  SecurityScanOutlined,
 } from '@ant-design/icons';
 import { useRouter } from 'next/navigation';
-import {
-  SecurityDashboardStats,
-  SecurityScanResult,
-  Vulnerability,
-  VulnerabilitySeverity,
-} from '../types';
+import dayjs from 'dayjs';
+import { securityScanService } from '../lib/services';
+import type { SecurityDashboardStats, SecurityScanResult, Vulnerability, VulnerabilitySeverity } from '../types';
 
 const { Title, Text } = Typography;
 
-// Mock data for initial development (will be replaced with API calls)
-const mockDashboardStats: SecurityDashboardStats = {
-  total_scans: 47,
-  total_vulnerabilities: 156,
-  open_vulnerabilities: 23,
-  resolved_vulnerabilities: 133,
-  severity_distribution: {
-    critical: 3,
-    high: 8,
-    medium: 12,
-    low: 67,
-    info: 66,
-  },
-  category_distribution: {
-    sql_injection: 5,
-    command_injection: 2,
-    path_traversal: 4,
-    xss: 8,
-    hardcoded_secret: 12,
-    weak_crypto: 6,
-    auth_bypass: 3,
-    insecure_config: 15,
-    access_control: 7,
-    data_exposure: 9,
-    other: 85,
-  },
-  detection_source_distribution: {
-    rule: 89,
-    ml: 42,
-    hybrid: 25,
-  },
-  recent_scans: [],
-  top_vulnerabilities: [],
-  model_accuracy: 94.7,
-  false_positive_rate: 3.2,
-};
-
 const severityColors: Record<VulnerabilitySeverity, string> = {
-  critical: '#ff4d4f',
-  high: '#fa8c16',
-  medium: '#faad14',
-  low: '#52c41a',
-  info: '#1890ff',
+  critical: '#ef4444',
+  high: '#f97316',
+  medium: '#eab308',
+  low: '#22c55e',
+  info: '#3b82f6',
 };
-
 const severityOrder: VulnerabilitySeverity[] = ['critical', 'high', 'medium', 'low', 'info'];
+
+const categoryLabel = (key: string) =>
+  key.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
 
 export default function SecurityDashboardPage() {
   const router = useRouter();
@@ -91,283 +51,211 @@ export default function SecurityDashboardPage() {
   const [stats, setStats] = useState<SecurityDashboardStats | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    loadDashboardData();
-  }, []);
-
-  const loadDashboardData = async () => {
+  const load = async () => {
     setLoading(true);
     setError(null);
     try {
-      // TODO: Replace with actual API call
-      // const data = await securityScanService.getDashboardStats();
-      await new Promise(resolve => setTimeout(resolve, 800)); // Simulate API delay
-      setStats(mockDashboardStats);
-    } catch (err) {
-      setError('Failed to load security dashboard data');
-      console.error(err);
+      setStats(await securityScanService.getDashboardStats());
+    } catch {
+      setError('Failed to load security dashboard data.');
     } finally {
       setLoading(false);
     }
   };
 
+  useEffect(() => {
+    load();
+  }, []);
+
   if (loading) {
     return (
       <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: 400 }}>
-        <Spin size="large" tip="Loading security dashboard..." />
+        <Spin size="large" />
       </div>
     );
   }
 
-  if (error) {
+  if (error || !stats) {
     return (
       <Alert
-        message="Error"
+        title="Error"
         description={error}
         type="error"
         showIcon
-        action={
-          <Button onClick={loadDashboardData} size="small">
-            Retry
-          </Button>
-        }
+        action={<Button onClick={load} size="small">Retry</Button>}
       />
     );
   }
 
-  if (!stats) return null;
+  const totalSeverity = severityOrder.reduce((sum, s) => sum + (stats.severity_distribution[s] ?? 0), 0);
+  const categories = Object.entries(stats.category_distribution).sort((a, b) => b[1] - a[1]);
+  const maxCategory = categories[0]?.[1] ?? 0;
+  const rules = stats.rule_engine;
 
-  const totalSeverity = Object.values(stats.severity_distribution).reduce((a, b) => a + b, 0);
+  const scanColumns = [
+    { title: 'File', dataIndex: 'filename', key: 'filename', render: (v: string) => <Text code>{v}</Text> },
+    {
+      title: 'Findings',
+      key: 'summary',
+      render: (_: unknown, r: SecurityScanResult) => (
+        <Space size={4} wrap>
+          {severityOrder.filter((s) => r.summary[s]).map((s) => (
+            <Tag key={s} color={severityColors[s]}>{r.summary[s]} {s}</Tag>
+          ))}
+          {r.summary.total === 0 && <Tag color="success">Clean</Tag>}
+        </Space>
+      ),
+    },
+    { title: 'Mode', dataIndex: 'detection_mode', key: 'mode', render: (v: string) => v.replace('_', ' ') },
+    { title: 'Duration', dataIndex: 'duration_ms', key: 'duration', render: (v: number) => `${v.toFixed(1)} ms` },
+    { title: 'When', dataIndex: 'started_at', key: 'when', render: (v: string) => dayjs(v).format('MMM D, HH:mm') },
+  ];
 
   return (
     <div style={{ padding: 24 }}>
-      {/* Header */}
-      <div style={{ marginBottom: 24, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+      <div style={{ marginBottom: 24, display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12 }}>
         <div>
           <Title level={2} style={{ margin: 0 }}>
             <SecurityScanOutlined style={{ marginRight: 12 }} />
             Security AI Dashboard
           </Title>
-          <Text type="secondary">
-            Hybrid security analysis powered by Rule Engine + Machine Learning
-          </Text>
+          <Text type="secondary">Results from scans run with the hybrid rule + ML detection engine</Text>
         </div>
         <Space>
-          <Button icon={<ReloadOutlined />} onClick={loadDashboardData}>
-            Refresh
-          </Button>
-          <Button type="primary" icon={<SecurityScanOutlined />} onClick={() => router.push('/security/scan')}>
-            New Scan
-          </Button>
+          <Button icon={<ReloadOutlined />} onClick={load}>Refresh</Button>
+          <Button type="primary" icon={<SecurityScanOutlined />} onClick={() => router.push('/security/scan')}>New scan</Button>
         </Space>
       </div>
 
-      {/* Quick Stats */}
+      {!stats.ml_model_loaded && (
+        <Alert
+          type="info"
+          showIcon
+          icon={<RobotOutlined />}
+          style={{ marginBottom: 24 }}
+          title="Running in rule-based mode"
+          description="No trained ML model is loaded, so scans use the deterministic rule engine and model metrics are not reported. Train and deploy a model to enable hybrid detection."
+        />
+      )}
+
       <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
         <Col xs={24} sm={12} lg={6}>
-          <Card>
-            <Statistic
-              title="Total Scans"
-              value={stats.total_scans}
-              prefix={<SecurityScanOutlined style={{ color: '#1890ff' }} />}
-            />
-          </Card>
+          <Card><Statistic title="Scans run" value={stats.total_scans} prefix={<SecurityScanOutlined style={{ color: '#3b82f6' }} />} /></Card>
         </Col>
         <Col xs={24} sm={12} lg={6}>
           <Card>
             <Statistic
-              title="Open Vulnerabilities"
+              title="Open findings"
               value={stats.open_vulnerabilities}
-              prefix={<BugOutlined style={{ color: '#ff4d4f' }} />}
-              valueStyle={{ color: stats.open_vulnerabilities > 10 ? '#ff4d4f' : undefined }}
+              prefix={<BugOutlined style={{ color: '#f97316' }} />}
+              suffix={<Text type="secondary" style={{ fontSize: 14 }}>/ {stats.total_vulnerabilities}</Text>}
             />
           </Card>
         </Col>
         <Col xs={24} sm={12} lg={6}>
           <Card>
             <Statistic
-              title="Model Accuracy"
-              value={stats.model_accuracy}
-              suffix="%"
-              prefix={<RobotOutlined style={{ color: '#52c41a' }} />}
-              precision={1}
+              title="Critical findings"
+              value={stats.severity_distribution.critical ?? 0}
+              prefix={<FireOutlined style={{ color: '#ef4444' }} />}
+              styles={{ content: { color: stats.severity_distribution.critical ? '#ef4444' : undefined } }}
             />
           </Card>
         </Col>
         <Col xs={24} sm={12} lg={6}>
           <Card>
             <Statistic
-              title="False Positive Rate"
-              value={stats.false_positive_rate}
-              suffix="%"
-              prefix={<WarningOutlined style={{ color: stats.false_positive_rate > 5 ? '#faad14' : '#52c41a' }} />}
-              precision={1}
+              title="Detection rules"
+              value={rules?.enabled_rules ?? 0}
+              prefix={<SafetyCertificateOutlined style={{ color: '#22c55e' }} />}
+              suffix={<Text type="secondary" style={{ fontSize: 14 }}>{rules?.critical_rules ?? 0} critical</Text>}
             />
           </Card>
         </Col>
       </Row>
 
-      {/* Severity Distribution & Detection Sources */}
-      <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
-        <Col xs={24} lg={12}>
-          <Card
-            title={
-              <Space>
-                <BugOutlined />
-                <span>Vulnerability Severity Distribution</span>
-              </Space>
-            }
-            extra={
-              <Button type="link" onClick={() => router.push('/security/vulnerabilities')}>
-                View All <RightOutlined />
-              </Button>
-            }
-          >
-            <div style={{ padding: '8px 0' }}>
-              {severityOrder.map(severity => {
-                const count = stats.severity_distribution[severity];
-                const percent = totalSeverity > 0 ? (count / totalSeverity) * 100 : 0;
-                return (
-                  <div key={severity} style={{ marginBottom: 16 }}>
+      {stats.total_scans === 0 ? (
+        <Card style={{ marginBottom: 24 }}>
+          <Empty description="No scans yet. Run your first scan to populate the dashboard.">
+            <Button type="primary" onClick={() => router.push('/security/scan')}>Run a scan</Button>
+          </Empty>
+        </Card>
+      ) : (
+        <>
+          <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
+            <Col xs={24} lg={12}>
+              <Card title={<Space><BugOutlined />Severity distribution</Space>} style={{ height: '100%' }}>
+                {severityOrder.map((severity) => {
+                  const count = stats.severity_distribution[severity] ?? 0;
+                  return (
+                    <div key={severity} style={{ marginBottom: 14 }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
+                        <Tag color={severityColors[severity]} style={{ textTransform: 'uppercase' }}>{severity}</Tag>
+                        <Text strong>{count}</Text>
+                      </div>
+                      <Progress percent={totalSeverity ? (count / totalSeverity) * 100 : 0} showInfo={false} strokeColor={severityColors[severity]} size="small" />
+                    </div>
+                  );
+                })}
+              </Card>
+            </Col>
+            <Col xs={24} lg={12}>
+              <Card title={<Space><CodeOutlined />Findings by category</Space>} style={{ height: '100%' }}>
+                {categories.map(([category, count]) => (
+                  <div key={category} style={{ marginBottom: 14 }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
-                      <Tag color={severityColors[severity]} style={{ textTransform: 'uppercase' }}>
-                        {severity}
-                      </Tag>
+                      <Text>{categoryLabel(category)}</Text>
                       <Text strong>{count}</Text>
                     </div>
-                    <Progress
-                      percent={percent}
-                      showInfo={false}
-                      strokeColor={severityColors[severity]}
-                      size="small"
-                    />
+                    <Progress percent={maxCategory ? (count / maxCategory) * 100 : 0} showInfo={false} strokeColor="#1e3a5f" size="small" />
                   </div>
-                );
-              })}
-            </div>
-          </Card>
-        </Col>
+                ))}
+              </Card>
+            </Col>
+          </Row>
 
-        <Col xs={24} lg={12}>
-          <Card
-            title={
-              <Space>
-                <RobotOutlined />
-                <span>Detection Source Analysis</span>
-              </Space>
-            }
-            extra={
-              <Tooltip title="Hybrid Engine combines Rule-based and ML detection">
-                <Button type="link">Learn More</Button>
-              </Tooltip>
-            }
-          >
-            <Row gutter={[16, 16]} style={{ padding: '16px 0' }}>
-              <Col span={8}>
-                <div style={{ textAlign: 'center' }}>
-                  <Progress
-                    type="circle"
-                    percent={Math.round((stats.detection_source_distribution.rule / stats.total_vulnerabilities) * 100)}
-                    strokeColor="#1890ff"
-                    size={80}
-                  />
-                  <div style={{ marginTop: 8 }}>
-                    <Text strong>Rule-Based</Text>
-                    <br />
-                    <Text type="secondary">{stats.detection_source_distribution.rule} detections</Text>
+          <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
+            <Col xs={24} xl={14}>
+              <Card title="Recent scans">
+                <Table rowKey="scan_id" dataSource={stats.recent_scans} columns={scanColumns} pagination={false} size="small" scroll={{ x: 560 }} />
+              </Card>
+            </Col>
+            <Col xs={24} xl={10}>
+              <Card title="Top findings">
+                {stats.top_vulnerabilities.map((v: Vulnerability) => (
+                  <div key={v.id} style={{ padding: '10px 0', borderBottom: '1px solid #f0f0f0' }}>
+                    <Space wrap>
+                      <Tag color={severityColors[v.severity]}>{v.severity.toUpperCase()}</Tag>
+                      <Text strong>{v.title}</Text>
+                    </Space>
+                    <div>
+                      <Text type="secondary" style={{ fontSize: 12 }}>
+                        {v.file_path}{v.line_number ? `:${v.line_number}` : ''} · {v.cwe_id}
+                      </Text>
+                    </div>
                   </div>
-                </div>
-              </Col>
-              <Col span={8}>
-                <div style={{ textAlign: 'center' }}>
-                  <Progress
-                    type="circle"
-                    percent={Math.round((stats.detection_source_distribution.ml / stats.total_vulnerabilities) * 100)}
-                    strokeColor="#722ed1"
-                    size={80}
-                  />
-                  <div style={{ marginTop: 8 }}>
-                    <Text strong>ML-Based</Text>
-                    <br />
-                    <Text type="secondary">{stats.detection_source_distribution.ml} detections</Text>
-                  </div>
-                </div>
-              </Col>
-              <Col span={8}>
-                <div style={{ textAlign: 'center' }}>
-                  <Progress
-                    type="circle"
-                    percent={Math.round((stats.detection_source_distribution.hybrid / stats.total_vulnerabilities) * 100)}
-                    strokeColor="#13c2c2"
-                    size={80}
-                  />
-                  <div style={{ marginTop: 8 }}>
-                    <Text strong>Hybrid</Text>
-                    <br />
-                    <Text type="secondary">{stats.detection_source_distribution.hybrid} detections</Text>
-                  </div>
-                </div>
-              </Col>
-            </Row>
+                ))}
+              </Card>
+            </Col>
+          </Row>
+        </>
+      )}
 
-            <Alert
-              message="Hybrid Detection Active"
-              description="The system uses a fusion strategy combining deterministic rules for critical vulnerabilities with ML for pattern detection."
-              type="info"
-              showIcon
-              icon={<CheckCircleOutlined />}
-              style={{ marginTop: 16 }}
-            />
-          </Card>
-        </Col>
-      </Row>
-
-      {/* Quick Actions */}
       <Row gutter={[16, 16]}>
-        <Col xs={24} sm={12} lg={6}>
-          <Card
-            hoverable
-            onClick={() => router.push('/security/scan')}
-            style={{ textAlign: 'center', cursor: 'pointer' }}
-          >
-            <SecurityScanOutlined style={{ fontSize: 32, color: '#1890ff', marginBottom: 8 }} />
-            <Title level={5}>Run Security Scan</Title>
-            <Text type="secondary">Analyze code with hybrid engine</Text>
-          </Card>
-        </Col>
-        <Col xs={24} sm={12} lg={6}>
-          <Card
-            hoverable
-            onClick={() => router.push('/security/rules')}
-            style={{ textAlign: 'center', cursor: 'pointer' }}
-          >
-            <CodeOutlined style={{ fontSize: 32, color: '#52c41a', marginBottom: 8 }} />
-            <Title level={5}>Security Rules</Title>
-            <Text type="secondary">Manage detection rules</Text>
-          </Card>
-        </Col>
-        <Col xs={24} sm={12} lg={6}>
-          <Card
-            hoverable
-            onClick={() => router.push('/security/training')}
-            style={{ textAlign: 'center', cursor: 'pointer' }}
-          >
-            <RobotOutlined style={{ fontSize: 32, color: '#722ed1', marginBottom: 8 }} />
-            <Title level={5}>ML Training</Title>
-            <Text type="secondary">Model training & evaluation</Text>
-          </Card>
-        </Col>
-        <Col xs={24} sm={12} lg={6}>
-          <Card
-            hoverable
-            onClick={() => router.push('/security/migration')}
-            style={{ textAlign: 'center', cursor: 'pointer' }}
-          >
-            <CloudServerOutlined style={{ fontSize: 32, color: '#fa8c16', marginBottom: 8 }} />
-            <Title level={5}>Huawei Migration</Title>
-            <Text type="secondary">ModelArts & MindSpore status</Text>
-          </Card>
-        </Col>
+        {[
+          { href: '/security/scan', icon: <SecurityScanOutlined style={{ fontSize: 32, color: '#3b82f6' }} />, title: 'Run security scan', text: 'Analyze code with the detection engine' },
+          { href: '/security/rules', icon: <CodeOutlined style={{ fontSize: 32, color: '#22c55e' }} />, title: 'Detection rules', text: 'Browse the active rule set' },
+          { href: '/security/training', icon: <RobotOutlined style={{ fontSize: 32, color: '#8b5cf6' }} />, title: 'ML training', text: 'Training pipeline (preview)' },
+          { href: '/security/migration', icon: <CloudServerOutlined style={{ fontSize: 32, color: '#f97316' }} />, title: 'MindSpore migration', text: 'Migration plan (preview)' },
+        ].map((item) => (
+          <Col xs={24} sm={12} lg={6} key={item.href}>
+            <Card hoverable onClick={() => router.push(item.href)} style={{ textAlign: 'center', cursor: 'pointer' }}>
+              {item.icon}
+              <Title level={5} style={{ marginTop: 8 }}>{item.title}</Title>
+              <Text type="secondary">{item.text}</Text>
+            </Card>
+          </Col>
+        ))}
       </Row>
     </div>
   );

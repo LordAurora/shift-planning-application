@@ -308,6 +308,13 @@ export default function TrainingDashboardPage() {
 
   return (
     <div style={{ padding: 24 }}>
+      <Alert
+        type="warning"
+        showIcon
+        style={{ marginBottom: 16 }}
+        title="Preview — sample data"
+        description="This page previews the training and evaluation workflow from the Security AI toolkit (backend/app/security_ai/training). The runs, metrics and feedback shown are sample data, not results from a trained model."
+      />
       {/* Header */}
       <div style={{ marginBottom: 24, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <div>

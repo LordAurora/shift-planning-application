@@ -15,8 +15,17 @@ export interface Employee {
   availability: AvailabilitySlot[];
   weekly_working_limit: number;
   overtime_limit: number;
+  preferences?: EmployeePreferences | null;
   created_at: string;
   updated_at: string;
+}
+
+export type ShiftTypeKey = 'morning' | 'day' | 'afternoon' | 'night';
+
+export interface EmployeePreferences {
+  preferred_shift?: ShiftTypeKey | null;
+  weekly_off_day?: number | null; // 0-6 (Sunday-Saturday)
+  work_model?: 'office' | 'remote' | 'hybrid' | null;
 }
 
 export interface AvailabilitySlot {
@@ -61,7 +70,7 @@ export interface ShiftRule {
 }
 
 export interface ShiftConflict {
-  type: 'overlap' | 'overtime' | 'availability';
+  type: 'overlap' | 'overtime' | 'availability' | 'understaffed';
   message: string;
   employee_id: number;
   shift_ids: number[];
@@ -77,16 +86,46 @@ export interface Notification {
   created_at: string;
 }
 
+export interface OptimizationSettings {
+  shift_types: ShiftTypeKey[];
+  operating_days: string[];
+  is_24_7: boolean;
+  min_employees_per_shift: number;
+  max_employees_per_shift: number;
+  max_hours_per_week: number;
+  max_consecutive_days: number;
+  min_rest_hours: number;
+  allow_overtime: boolean;
+  consider_preferences: boolean;
+  preference_weight: number;
+  balance_workload: boolean;
+}
+
 export interface OptimizationRequest {
   start_date: string;
   end_date: string;
   department_ids?: number[];
+  settings: OptimizationSettings;
+}
+
+export interface OptimizedShift extends Shift {
+  shift_type: ShiftTypeKey;
+  preferred: boolean;
+}
+
+export interface OptimizationMetrics {
+  coverage: number;
+  preference_match: number;
+  fairness: number;
+  total_hours: number;
+  employees_scheduled: number;
 }
 
 export interface OptimizationResult {
-  shifts: Shift[];
+  shifts: OptimizedShift[];
   conflicts: ShiftConflict[];
   optimization_score: number;
+  metrics?: OptimizationMetrics;
   message: string;
 }
 
@@ -200,6 +239,8 @@ export interface SecurityScanResult {
   rule_detections: number;
   ml_detections: number;
   hybrid_detections: number;
+  filename?: string;
+  ml_model_loaded?: boolean;
 }
 
 /**
@@ -347,6 +388,24 @@ export interface SecurityDashboardStats {
   detection_source_distribution: Record<DetectionSource, number>;
   recent_scans: SecurityScanResult[];
   top_vulnerabilities: Vulnerability[];
-  model_accuracy: number;
-  false_positive_rate: number;
+  model_accuracy: number | null;
+  false_positive_rate: number | null;
+  ml_model_loaded?: boolean;
+  rule_engine?: {
+    total_rules: number;
+    enabled_rules: number;
+    critical_rules: number;
+  };
+}
+
+export interface EngineRule {
+  id: string;
+  name: string;
+  description: string;
+  severity: VulnerabilitySeverity;
+  category: string;
+  cwe_id?: string;
+  patterns: number;
+  remediation?: string;
+  enabled: boolean;
 }

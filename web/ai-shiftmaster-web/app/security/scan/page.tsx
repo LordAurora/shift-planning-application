@@ -34,11 +34,11 @@ import {
   DownloadOutlined,
 } from '@ant-design/icons';
 import {
-  SecurityScanRequest,
   SecurityScanResult,
   Vulnerability,
   VulnerabilitySeverity,
 } from '../../types';
+import { securityScanService } from '../../lib/services';
 
 const { Title, Text, Paragraph } = Typography;
 const { TextArea } = Input;
@@ -85,82 +85,30 @@ def read_file(filename):
 };
 
 // Mock scan result for demo
-const mockScanResult: SecurityScanResult = {
-  scan_id: 'scan-001',
-  status: 'completed',
-  scan_type: 'source_code',
-  detection_mode: 'full',
-  started_at: new Date().toISOString(),
-  completed_at: new Date().toISOString(),
-  duration_ms: 1250,
-  vulnerabilities: [
-    {
-      id: 'vuln-001',
-      category: 'sql_injection',
-      severity: 'critical',
-      title: 'SQL Injection Vulnerability',
-      description: 'User input is directly concatenated into SQL query without sanitization.',
-      file_path: 'app/database.py',
-      line_number: 3,
-      code_snippet: 'query = "SELECT * FROM users WHERE id = " + user_id',
-      cwe_id: 'CWE-89',
-      owasp_category: 'A03:2021-Injection',
-      detection_source: 'rule',
-      confidence_score: 0.98,
-      mitigation: 'Use parameterized queries or prepared statements instead of string concatenation.',
-      false_positive_flag: false,
-      created_at: new Date().toISOString(),
-    },
-    {
-      id: 'vuln-002',
-      category: 'hardcoded_secret',
-      severity: 'high',
-      title: 'Hardcoded API Key',
-      description: 'Sensitive API key found hardcoded in source code.',
-      file_path: 'config.py',
-      line_number: 2,
-      code_snippet: 'API_KEY = "sk-1234567890abcdef"',
-      cwe_id: 'CWE-798',
-      owasp_category: 'A07:2021-Identification and Authentication Failures',
-      detection_source: 'hybrid',
-      confidence_score: 0.95,
-      mitigation: 'Store secrets in environment variables or a secure secrets manager.',
-      false_positive_flag: false,
-      created_at: new Date().toISOString(),
-    },
-  ],
-  summary: {
-    total: 2,
-    critical: 1,
-    high: 1,
-    medium: 0,
-    low: 0,
-    info: 0,
-  },
-  rule_detections: 1,
-  ml_detections: 0,
-  hybrid_detections: 1,
-};
-
 export default function SecurityScanPage() {
   const [form] = Form.useForm();
   const [scanning, setScanning] = useState(false);
   const [scanResult, setScanResult] = useState<SecurityScanResult | null>(null);
   const [codeInput, setCodeInput] = useState('');
 
-  const handleScan = async (values: SecurityScanRequest) => {
+  const handleScan = async (values: {
+    filename: string;
+    language: string;
+    detection_mode: 'full' | 'rules_only' | 'critical_only';
+    content: string;
+  }) => {
     setScanning(true);
     setScanResult(null);
 
     try {
-      // TODO: Replace with actual API call
-      // const result = await securityScanService.runScan(values);
-      await new Promise(resolve => setTimeout(resolve, 2000)); // Simulate scan
-      setScanResult(mockScanResult);
-      message.success('Security scan completed!');
-    } catch (error) {
+      const result = await securityScanService.runScan(values);
+      setScanResult(result);
+      if (values.detection_mode === 'full' && result.ml_model_loaded === false) {
+        message.info('No trained ML model is loaded — the scan ran with the rule engine.');
+      }
+      message.success(`Scan completed: ${result.summary.total} finding(s).`);
+    } catch {
       message.error('Scan failed. Please try again.');
-      console.error(error);
     } finally {
       setScanning(false);
     }
@@ -260,33 +208,34 @@ export default function SecurityScanPage() {
               layout="vertical"
               onFinish={handleScan}
               initialValues={{
-                scan_type: 'source_code',
+                filename: 'snippet.py',
+                language: 'python',
                 detection_mode: 'full',
-                include_mitigations: true,
               }}
             >
-              <Form.Item name="scan_type" label="Scan Type">
-                <Select>
-                  <Option value="source_code">
-                    <CodeOutlined /> Source Code Analysis
-                  </Option>
-                  <Option value="config">
-                    <FileSearchOutlined /> Configuration Analysis
-                  </Option>
-                  <Option value="api">
-                    <ApiOutlined /> API Security Analysis
-                  </Option>
-                  <Option value="full">
-                    <SecurityScanOutlined /> Full Analysis
-                  </Option>
-                </Select>
-              </Form.Item>
+              <Row gutter={12}>
+                <Col span={14}>
+                  <Form.Item name="filename" label="File name" rules={[{ required: true, message: 'File name is required' }]}>
+                    <Input prefix={<CodeOutlined />} placeholder="e.g. payments.py" />
+                  </Form.Item>
+                </Col>
+                <Col span={10}>
+                  <Form.Item name="language" label="Language">
+                    <Select>
+                      <Option value="python">Python</Option>
+                      <Option value="javascript">JavaScript</Option>
+                      <Option value="typescript">TypeScript</Option>
+                      <Option value="java">Java</Option>
+                      <Option value="go">Go</Option>
+                    </Select>
+                  </Form.Item>
+                </Col>
+              </Row>
 
               <Form.Item name="detection_mode" label="Detection Mode">
                 <Select>
                   <Option value="full">Full Hybrid (Rule + ML)</Option>
                   <Option value="rules_only">Rules Only (Deterministic)</Option>
-                  <Option value="ml_only">ML Only (Pattern-based)</Option>
                   <Option value="critical_only">Critical Rules Only</Option>
                 </Select>
               </Form.Item>
