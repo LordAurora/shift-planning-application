@@ -1,732 +1,432 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect, useRef, useState } from 'react';
+import Link from 'next/link';
 import {
-  Layout,
-  Typography,
-  Button,
-  Row,
-  Col,
-  Card,
-  Space,
-  Divider,
-  Avatar,
-  List,
-} from 'antd';
-import {
-  RobotOutlined,
+  AlertOutlined,
+  ApiOutlined,
+  ArrowRightOutlined,
+  BarChartOutlined,
+  BellOutlined,
   CalendarOutlined,
-  TeamOutlined,
-  SafetyCertificateOutlined,
-  LineChartOutlined,
+  CheckCircleFilled,
   ClockCircleOutlined,
-  CheckCircleOutlined,
-  ThunderboltOutlined,
-  GlobalOutlined,
-  CustomerServiceOutlined,
-  RightOutlined,
-  PlayCircleOutlined,
-  StarFilled,
-  BankOutlined,
+  CloudSyncOutlined,
+  GithubOutlined,
+  HeartOutlined,
   MobileOutlined,
-  CloudOutlined,
-  LockOutlined,
+  RobotOutlined,
+  SafetyCertificateOutlined,
+  TeamOutlined,
+  ThunderboltOutlined,
 } from '@ant-design/icons';
-import { useRouter } from 'next/navigation';
+import './landing.css';
 
-const { Header, Content, Footer } = Layout;
-const { Title, Text, Paragraph } = Typography;
+/* ------------------------------------------------------------------ */
+/* Small helpers                                                       */
+/* ------------------------------------------------------------------ */
+
+/** Adds `is-visible` to children with `.reveal` when they scroll into view. */
+function useReveal() {
+  const ref = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const root = ref.current;
+    if (!root) return;
+    const items = root.querySelectorAll<HTMLElement>('.reveal');
+    if (!('IntersectionObserver' in window)) {
+      items.forEach((el) => el.classList.add('is-visible'));
+      return;
+    }
+    const observer = new IntersectionObserver(
+      (entries) =>
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add('is-visible');
+            observer.unobserve(entry.target);
+          }
+        }),
+      { threshold: 0.15 }
+    );
+    items.forEach((el) => observer.observe(el));
+    return () => observer.disconnect();
+  }, []);
+  return ref;
+}
+
+/** Counts up to `to` once visible. */
+function CountUp({ to, decimals = 0, suffix = '' }: { to: number; decimals?: number; suffix?: string }) {
+  const ref = useRef<HTMLSpanElement>(null);
+  const [value, setValue] = useState(0);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    let frame = 0;
+    const observer = new IntersectionObserver(([entry]) => {
+      if (!entry.isIntersecting) return;
+      observer.disconnect();
+      if (reduce) {
+        setValue(to);
+        return;
+      }
+      const start = performance.now();
+      const tick = (now: number) => {
+        const t = Math.min((now - start) / 1400, 1);
+        setValue(to * (1 - Math.pow(1 - t, 3)));
+        if (t < 1) frame = requestAnimationFrame(tick);
+      };
+      frame = requestAnimationFrame(tick);
+    });
+    observer.observe(el);
+    return () => {
+      observer.disconnect();
+      cancelAnimationFrame(frame);
+    };
+  }, [to]);
+  return <span ref={ref}>{value.toFixed(decimals)}{suffix}</span>;
+}
+
+/* ------------------------------------------------------------------ */
+/* Content                                                             */
+/* ------------------------------------------------------------------ */
+
+const DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+const PEOPLE = ['Hannah S.', 'Omar H.', 'Grace K.', 'Leo M.', 'Ines C.'];
+// m = morning, d = day, e = evening, n = night, '' = day off
+const PLAN = [
+  ['m', 'm', 'm', '', 'm', 'd', ''],
+  ['e', 'e', '', 'e', 'e', '', 'e'],
+  ['d', 'd', 'd', 'd', '', '', 'd'],
+  ['', 'n', 'n', 'n', 'n', '', ''],
+  ['m', '', 'd', 'm', 'm', 'm', ''],
+];
+const SHIFT_NAME: Record<string, string> = { m: 'Morning', d: 'Day', e: 'Evening', n: 'Night' };
+
+const FEATURES = [
+  { icon: <RobotOutlined />, title: 'AI schedule optimization', text: 'Fill every slot with the best-fitting people, scored on preferences and workload balance.' },
+  { icon: <SafetyCertificateOutlined />, title: 'Labor rules built in', text: 'Weekly hour caps, minimum rest and consecutive-day limits are enforced, not suggested.' },
+  { icon: <HeartOutlined />, title: 'Preferences that count', text: 'Preferred shifts and weekly days off are part of the objective from the start.' },
+  { icon: <AlertOutlined />, title: 'Conflict detection', text: 'Overlaps, overtime and understaffed slots are flagged before you publish.' },
+  { icon: <BarChartOutlined />, title: 'Live workforce analytics', text: 'Coverage, planned hours and shift mix for any week or month, exportable to Excel.' },
+  { icon: <BellOutlined />, title: 'Real-time updates', text: 'Server-sent events keep dashboards current; push notifications reach the mobile app.' },
+];
+
+const STEPS = [
+  { n: '01', title: 'Set the rules', text: 'Define operating days, shift types, staffing ranges and labor limits per department.' },
+  { n: '02', title: 'Generate', text: 'The optimizer builds a full schedule and explains coverage, preference match and fairness.' },
+  { n: '03', title: 'Review & publish', text: 'Check warnings, export or save. Employees see their shifts instantly on mobile.' },
+];
+
+const STACK = ['FastAPI', 'PostgreSQL', 'SQLAlchemy', 'Next.js 16', 'React 19', 'TypeScript', 'Ant Design', 'Flutter', 'Celery', 'Redis'];
 
 export default function LandingPage() {
-  const router = useRouter();
+  const pageRef = useReveal();
+  const [scrolled, setScrolled] = useState(false);
 
-  const features = [
-    {
-      icon: <RobotOutlined style={{ fontSize: 40, color: '#1e3a5f' }} />,
-      title: 'Yapay Zeka Destekli Optimizasyon',
-      description: 'Gelişmiş AI algoritmaları ile vardiya planlamanızı otomatik olarak optimize edin. Çalışan tercihlerini, iş yükünü ve yasal gereksinimleri dengeleyin.',
-    },
-    {
-      icon: <CalendarOutlined style={{ fontSize: 40, color: '#1e3a5f' }} />,
-      title: 'Akıllı Vardiya Planlama',
-      description: 'Sürükle-bırak arayüzü ile kolay vardiya oluşturma. Çakışmaları otomatik algılama ve çözümleme.',
-    },
-    {
-      icon: <TeamOutlined style={{ fontSize: 40, color: '#1e3a5f' }} />,
-      title: 'Çalışan Yönetimi',
-      description: 'Tüm çalışan bilgilerini tek bir platformda yönetin. Yetenekler, sertifikalar ve tercihler.',
-    },
-    {
-      icon: <SafetyCertificateOutlined style={{ fontSize: 40, color: '#1e3a5f' }} />,
-      title: 'Uyumluluk ve Güvenlik',
-      description: 'İş kanunları ve şirket politikalarına tam uyum. KVKK ve GDPR uyumlu veri güvenliği.',
-    },
-    {
-      icon: <LineChartOutlined style={{ fontSize: 40, color: '#1e3a5f' }} />,
-      title: 'Detaylı Raporlama',
-      description: 'Gerçek zamanlı analitikler ve özelleştirilebilir raporlar. Verimlilik metriklerini takip edin.',
-    },
-    {
-      icon: <ClockCircleOutlined style={{ fontSize: 40, color: '#1e3a5f' }} />,
-      title: 'Zaman Tasarrufu',
-      description: 'Manuel planlama süresini %80 oranında azaltın. Otomatik bildirimler ve hatırlatmalar.',
-    },
-  ];
-
-  const benefits = [
-    'Vardiya çakışmalarını %95 oranında azaltın',
-    'Çalışan memnuniyetini %40 artırın',
-    'Planlama süresini %80 kısaltın',
-    'İşgücü maliyetlerini %25 optimize edin',
-    'Yasal uyumluluk risklerini minimize edin',
-    'Gerçek zamanlı görünürlük sağlayın',
-  ];
-
-  const testimonials = [
-    {
-      name: 'Ahmet Yılmaz',
-      role: 'İK Direktörü',
-      company: 'ABC Holding',
-      content: 'ShiftMaster AI sayesinde 500 çalışanımızın vardiya planlamasını artık saatler yerine dakikalar içinde yapıyoruz.',
-      avatar: 'A',
-    },
-    {
-      name: 'Zeynep Kaya',
-      role: 'Operasyon Müdürü',
-      company: 'XYZ Lojistik',
-      content: 'Yapay zeka önerileri sayesinde çalışan memnuniyetimiz önemli ölçüde arttı. Kesinlikle tavsiye ediyorum.',
-      avatar: 'Z',
-    },
-    {
-      name: 'Mehmet Demir',
-      role: 'Genel Müdür',
-      company: 'Tech Solutions',
-      content: 'Modern arayüzü ve güçlü özellikleri ile vardiya yönetiminde devrim yarattı. ROI ilk ayda kendini amorti etti.',
-      avatar: 'M',
-    },
-  ];
-
-  const pricingPlans = [
-    {
-      name: 'Başlangıç',
-      price: '₺999',
-      period: '/ay',
-      description: 'Küçük ekipler için ideal',
-      features: [
-        '25 çalışana kadar',
-        'Temel vardiya planlama',
-        'E-posta desteği',
-        'Mobil uygulama erişimi',
-        'Temel raporlama',
-      ],
-      highlighted: false,
-    },
-    {
-      name: 'Profesyonel',
-      price: '₺2,499',
-      period: '/ay',
-      description: 'Büyüyen şirketler için',
-      features: [
-        '100 çalışana kadar',
-        'AI destekli optimizasyon',
-        'Öncelikli destek',
-        'Gelişmiş raporlama',
-        'API erişimi',
-        'Özel entegrasyonlar',
-      ],
-      highlighted: true,
-    },
-    {
-      name: 'Kurumsal',
-      price: 'Özel Fiyat',
-      period: '',
-      description: 'Büyük işletmeler için',
-      features: [
-        'Sınırsız çalışan',
-        'Tam AI özellikleri',
-        '7/24 destek',
-        'Özel eğitim',
-        'SLA garantisi',
-        'On-premise seçeneği',
-      ],
-      highlighted: false,
-    },
-  ];
-
-  const stats = [
-    { value: '500+', label: 'Aktif Şirket' },
-    { value: '50,000+', label: 'Yönetilen Çalışan' },
-    { value: '%99.9', label: 'Uptime' },
-    { value: '4.9/5', label: 'Müşteri Puanı' },
-  ];
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 12);
+    onScroll();
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => window.removeEventListener('scroll', onScroll);
+  }, []);
 
   return (
-    <Layout style={{ minHeight: '100vh', background: '#fff' }}>
-      {/* Header */}
-      <Header
-        style={{
-          position: 'fixed',
-          zIndex: 1000,
-          width: '100%',
-          background: 'rgba(255, 255, 255, 0.95)',
-          backdropFilter: 'blur(8px)',
-          borderBottom: '1px solid #f0f0f0',
-          padding: '0 50px',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          height: 70,
-        }}
-      >
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          <RobotOutlined style={{ fontSize: 32, color: '#1e3a5f' }} />
-          <Title level={4} style={{ margin: 0, color: '#1e3a5f' }}>
+    <div className="lp" ref={pageRef}>
+      {/* ------------------------------------------------ Navigation */}
+      <header className={`lp-nav ${scrolled ? 'is-scrolled' : ''}`}>
+        <div className="lp-container lp-nav-inner">
+          <Link href="/landing" className="lp-brand">
+            <span className="lp-brand-mark"><CalendarOutlined /></span>
             ShiftMaster AI
-          </Title>
+          </Link>
+          <nav className="lp-links">
+            <a href="#features">Features</a>
+            <a href="#how">How it works</a>
+            <a href="#mobile">Mobile</a>
+            <a href="#security">Security AI</a>
+          </nav>
+          <div className="lp-nav-cta">
+            <Link href="/login" className="lp-btn lp-btn-ghost">Sign in</Link>
+            <Link href="/register" className="lp-btn lp-btn-primary">Get started</Link>
+          </div>
         </div>
-        <Space size="middle">
-          <Button type="link" style={{ color: '#1e3a5f' }} onClick={() => document.getElementById('features')?.scrollIntoView({ behavior: 'smooth' })}>
-            Özellikler
-          </Button>
-          <Button type="link" style={{ color: '#1e3a5f' }} onClick={() => document.getElementById('pricing')?.scrollIntoView({ behavior: 'smooth' })}>
-            Fiyatlandırma
-          </Button>
-          <Button type="link" style={{ color: '#1e3a5f' }} onClick={() => document.getElementById('contact')?.scrollIntoView({ behavior: 'smooth' })}>
-            İletişim
-          </Button>
-          <Button onClick={() => router.push('/login')}>Giriş Yap</Button>
-          <Button type="primary" onClick={() => router.push('/register')}>
-            Ücretsiz Başla
-          </Button>
-        </Space>
-      </Header>
+      </header>
 
-      <Content>
-        {/* Hero Section */}
-        <div
-          style={{
-            background: 'linear-gradient(135deg, #1e3a5f 0%, #2d5a87 50%, #4a7c9b 100%)',
-            padding: '140px 50px 100px',
-            position: 'relative',
-            overflow: 'hidden',
-          }}
-        >
-          <div
-            style={{
-              position: 'absolute',
-              top: 0,
-              left: 0,
-              right: 0,
-              bottom: 0,
-              background: 'url("data:image/svg+xml,%3Csvg width="60" height="60" viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg"%3E%3Cg fill="none" fill-rule="evenodd"%3E%3Cg fill="%23ffffff" fill-opacity="0.03"%3E%3Ccircle cx="30" cy="30" r="2"/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")',
-            }}
-          />
-          <Row gutter={[48, 48]} align="middle" style={{ maxWidth: 1400, margin: '0 auto', position: 'relative' }}>
-            <Col xs={24} lg={12}>
-              <Space direction="vertical" size={24}>
-                <div
-                  style={{
-                    background: 'rgba(255, 255, 255, 0.1)',
-                    padding: '6px 16px',
-                    borderRadius: 20,
-                    display: 'inline-block',
-                  }}
-                >
-                  <Text style={{ color: '#fff', fontSize: 14 }}>
-                    🚀 Türkiye'nin #1 Vardiya Planlama Platformu
-                  </Text>
-                </div>
-                <Title style={{ color: '#fff', fontSize: 48, margin: 0, lineHeight: 1.2 }}>
-                  Yapay Zeka ile
-                  <br />
-                  <span style={{ color: '#7dd3fc' }}>Akıllı Vardiya</span>
-                  <br />
-                  Planlama
-                </Title>
-                <Paragraph style={{ color: 'rgba(255, 255, 255, 0.85)', fontSize: 18, maxWidth: 500 }}>
-                  ShiftMaster AI, çalışan vardiyalarını optimize eden, iş gücü verimliliğini artıran 
-                  ve operasyonel maliyetleri düşüren yapay zeka destekli kurumsal çözümdür.
-                </Paragraph>
-                <Space size="middle">
-                  <Button
-                    type="primary"
-                    size="large"
-                    icon={<RightOutlined />}
-                    onClick={() => router.push('/register')}
-                    style={{
-                      height: 50,
-                      paddingLeft: 32,
-                      paddingRight: 32,
-                      fontSize: 16,
-                      background: '#fff',
-                      color: '#1e3a5f',
-                      border: 'none',
-                    }}
-                  >
-                    14 Gün Ücretsiz Deneyin
-                  </Button>
-                  <Button
-                    size="large"
-                    icon={<PlayCircleOutlined />}
-                    style={{
-                      height: 50,
-                      paddingLeft: 32,
-                      paddingRight: 32,
-                      fontSize: 16,
-                      background: 'transparent',
-                      color: '#fff',
-                      borderColor: 'rgba(255, 255, 255, 0.5)',
-                    }}
-                  >
-                    Demo İzle
-                  </Button>
-                </Space>
-                <div style={{ marginTop: 16 }}>
-                  <Text style={{ color: 'rgba(255, 255, 255, 0.7)', fontSize: 13 }}>
-                    ✓ Kredi kartı gerektirmez &nbsp;&nbsp; ✓ Kurulum desteği dahil &nbsp;&nbsp; ✓ İstediğiniz zaman iptal edin
-                  </Text>
-                </div>
-              </Space>
-            </Col>
-            <Col xs={24} lg={12}>
-              <div
-                style={{
-                  background: 'rgba(255, 255, 255, 0.1)',
-                  borderRadius: 20,
-                  padding: 24,
-                  backdropFilter: 'blur(10px)',
-                  border: '1px solid rgba(255, 255, 255, 0.2)',
-                }}
-              >
-                <div
-                  style={{
-                    background: '#fff',
-                    borderRadius: 12,
-                    padding: 20,
-                    boxShadow: '0 20px 60px rgba(0, 0, 0, 0.3)',
-                  }}
-                >
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16 }}>
-                    <div style={{ width: 12, height: 12, borderRadius: '50%', background: '#ff5f57' }} />
-                    <div style={{ width: 12, height: 12, borderRadius: '50%', background: '#febc2e' }} />
-                    <div style={{ width: 12, height: 12, borderRadius: '50%', background: '#28c840' }} />
-                  </div>
-                  <div style={{ background: '#f8fafc', borderRadius: 8, padding: 16 }}>
-                    <Row gutter={[8, 8]}>
-                      {['Pzt', 'Sal', 'Çar', 'Per', 'Cum', 'Cmt', 'Paz'].map((day) => (
-                        <Col span={3} key={day}>
-                          <div style={{ textAlign: 'center', fontSize: 11, color: '#64748b', fontWeight: 500 }}>
-                            {day}
-                          </div>
-                        </Col>
-                      ))}
-                      {[...Array(7)].map((_, i) => (
-                        <Col span={3} key={i}>
-                          <div
-                            style={{
-                              background: i === 3 ? '#1e3a5f' : i < 5 ? '#e2e8f0' : '#f1f5f9',
-                              height: 40,
-                              borderRadius: 6,
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                            }}
-                          >
-                            {i === 3 && <RobotOutlined style={{ color: '#fff', fontSize: 16 }} />}
-                          </div>
-                        </Col>
-                      ))}
-                    </Row>
-                    <div style={{ marginTop: 16, display: 'flex', alignItems: 'center', gap: 8 }}>
-                      <ThunderboltOutlined style={{ color: '#1e3a5f' }} />
-                      <Text style={{ fontSize: 12, color: '#64748b' }}>AI Optimizasyonu Aktif</Text>
-                    </div>
-                  </div>
-                </div>
+      {/* ------------------------------------------------ Hero */}
+      <section className="lp-hero">
+        <div className="lp-blob lp-blob-a" />
+        <div className="lp-blob lp-blob-b" />
+        <div className="lp-grid-bg" />
+
+        <div className="lp-container lp-hero-inner">
+          <div className="lp-hero-copy">
+            <span className="lp-pill lp-fade" style={{ animationDelay: '0ms' }}>
+              <ThunderboltOutlined /> Constraint-aware scheduling engine
+            </span>
+            <h1 className="lp-fade" style={{ animationDelay: '80ms' }}>
+              Shift plans that <span className="lp-gradient-text">respect people</span> and the rules.
+            </h1>
+            <p className="lp-lead lp-fade" style={{ animationDelay: '160ms' }}>
+              ShiftMaster AI turns availability, preferences and labor limits into a ready-to-publish schedule in
+              seconds — with a web dashboard for managers and a mobile app for every employee.
+            </p>
+            <div className="lp-hero-cta lp-fade" style={{ animationDelay: '240ms' }}>
+              <Link href="/register" className="lp-btn lp-btn-primary lp-btn-lg">
+                Start planning <ArrowRightOutlined />
+              </Link>
+              <Link href="/login" className="lp-btn lp-btn-light lp-btn-lg">Open the demo</Link>
+            </div>
+            <ul className="lp-checks lp-fade" style={{ animationDelay: '320ms' }}>
+              <li><CheckCircleFilled /> Rest periods enforced</li>
+              <li><CheckCircleFilled /> Preferences built in</li>
+              <li><CheckCircleFilled /> Excel & CSV export</li>
+            </ul>
+          </div>
+
+          {/* Animated product preview */}
+          <div className="lp-hero-visual lp-fade" style={{ animationDelay: '200ms' }}>
+            <div className="lp-window">
+              <div className="lp-window-bar">
+                <span /><span /><span />
+                <em>Week 47 · Engineering</em>
               </div>
-            </Col>
-          </Row>
-        </div>
-
-        {/* Stats Section */}
-        <div style={{ background: '#f8fafc', padding: '60px 50px' }}>
-          <Row gutter={[48, 24]} justify="center" style={{ maxWidth: 1200, margin: '0 auto' }}>
-            {stats.map((stat, index) => (
-              <Col xs={12} sm={6} key={index}>
-                <div style={{ textAlign: 'center' }}>
-                  <Title level={2} style={{ color: '#1e3a5f', marginBottom: 4 }}>
-                    {stat.value}
-                  </Title>
-                  <Text type="secondary">{stat.label}</Text>
-                </div>
-              </Col>
-            ))}
-          </Row>
-        </div>
-
-        {/* Features Section */}
-        <div id="features" style={{ padding: '100px 50px', background: '#fff' }}>
-          <div style={{ maxWidth: 1200, margin: '0 auto' }}>
-            <div style={{ textAlign: 'center', marginBottom: 60 }}>
-              <Text
-                style={{
-                  color: '#1e3a5f',
-                  fontWeight: 600,
-                  textTransform: 'uppercase',
-                  letterSpacing: 2,
-                  fontSize: 13,
-                }}
-              >
-                Özellikler
-              </Text>
-              <Title level={2} style={{ marginTop: 12, marginBottom: 16 }}>
-                Neden ShiftMaster AI?
-              </Title>
-              <Paragraph style={{ color: '#64748b', fontSize: 16, maxWidth: 600, margin: '0 auto' }}>
-                Modern iş gücü yönetimi için ihtiyacınız olan tüm araçlar tek bir platformda.
-                Yapay zeka destekli çözümlerle verimliliğinizi artırın.
-              </Paragraph>
-            </div>
-
-            <Row gutter={[32, 32]}>
-              {features.map((feature, index) => (
-                <Col xs={24} sm={12} lg={8} key={index}>
-                  <Card
-                    hoverable
-                    style={{
-                      height: '100%',
-                      borderRadius: 16,
-                      border: '1px solid #e2e8f0',
-                      transition: 'all 0.3s ease',
-                    }}
-                    bodyStyle={{ padding: 32 }}
-                  >
-                    <div style={{ marginBottom: 20 }}>{feature.icon}</div>
-                    <Title level={4} style={{ marginBottom: 12 }}>
-                      {feature.title}
-                    </Title>
-                    <Paragraph style={{ color: '#64748b', marginBottom: 0 }}>
-                      {feature.description}
-                    </Paragraph>
-                  </Card>
-                </Col>
-              ))}
-            </Row>
-          </div>
-        </div>
-
-        {/* Benefits Section */}
-        <div style={{ background: '#1e3a5f', padding: '100px 50px' }}>
-          <Row gutter={[64, 48]} align="middle" style={{ maxWidth: 1200, margin: '0 auto' }}>
-            <Col xs={24} lg={12}>
-              <Text
-                style={{
-                  color: '#7dd3fc',
-                  fontWeight: 600,
-                  textTransform: 'uppercase',
-                  letterSpacing: 2,
-                  fontSize: 13,
-                }}
-              >
-                Avantajlar
-              </Text>
-              <Title level={2} style={{ color: '#fff', marginTop: 12, marginBottom: 24 }}>
-                İşletmenizi Dönüştürün
-              </Title>
-              <Paragraph style={{ color: 'rgba(255, 255, 255, 0.8)', fontSize: 16, marginBottom: 32 }}>
-                ShiftMaster AI ile operasyonel verimliliğinizi artırın, 
-                maliyetlerinizi düşürün ve çalışan memnuniyetini yükseltin.
-              </Paragraph>
-              <List
-                dataSource={benefits}
-                renderItem={(item) => (
-                  <List.Item style={{ border: 'none', padding: '8px 0' }}>
-                    <Space>
-                      <CheckCircleOutlined style={{ color: '#7dd3fc', fontSize: 20 }} />
-                      <Text style={{ color: '#fff', fontSize: 16 }}>{item}</Text>
-                    </Space>
-                  </List.Item>
-                )}
-              />
-            </Col>
-            <Col xs={24} lg={12}>
-              <Row gutter={[16, 16]}>
-                {[
-                  { icon: <MobileOutlined />, title: 'Mobil Uygulama', desc: 'iOS ve Android desteği' },
-                  { icon: <CloudOutlined />, title: 'Bulut Tabanlı', desc: 'Her yerden erişim' },
-                  { icon: <LockOutlined />, title: 'Güvenli', desc: 'Kurumsal güvenlik' },
-                  { icon: <GlobalOutlined />, title: 'Çok Dilli', desc: 'Türkçe ve İngilizce' },
-                ].map((item, index) => (
-                  <Col span={12} key={index}>
-                    <Card
-                      style={{
-                        background: 'rgba(255, 255, 255, 0.1)',
-                        border: '1px solid rgba(255, 255, 255, 0.2)',
-                        borderRadius: 12,
-                      }}
-                      bodyStyle={{ padding: 24 }}
-                    >
-                      <div style={{ color: '#7dd3fc', fontSize: 32, marginBottom: 12 }}>{item.icon}</div>
-                      <Title level={5} style={{ color: '#fff', marginBottom: 4 }}>
-                        {item.title}
-                      </Title>
-                      <Text style={{ color: 'rgba(255, 255, 255, 0.7)' }}>{item.desc}</Text>
-                    </Card>
-                  </Col>
+              <div className="lp-schedule">
+                <div className="lp-schedule-head" />
+                {DAYS.map((d) => <div key={d} className="lp-schedule-head">{d}</div>)}
+                {PEOPLE.map((person, row) => (
+                  <React.Fragment key={person}>
+                    <div className="lp-schedule-name">{person}</div>
+                    {PLAN[row].map((cell, col) => (
+                      <div key={col} className="lp-schedule-cell">
+                        {cell && (
+                          <span
+                            className={`lp-chip lp-chip-${cell}`}
+                            style={{ animationDelay: `${600 + (col * PEOPLE.length + row) * 70}ms` }}
+                          >
+                            {SHIFT_NAME[cell]}
+                          </span>
+                        )}
+                      </div>
+                    ))}
+                  </React.Fragment>
                 ))}
-              </Row>
-            </Col>
-          </Row>
-        </div>
-
-        {/* Testimonials Section */}
-        <div style={{ background: '#f8fafc', padding: '100px 50px' }}>
-          <div style={{ maxWidth: 1200, margin: '0 auto' }}>
-            <div style={{ textAlign: 'center', marginBottom: 60 }}>
-              <Text
-                style={{
-                  color: '#1e3a5f',
-                  fontWeight: 600,
-                  textTransform: 'uppercase',
-                  letterSpacing: 2,
-                  fontSize: 13,
-                }}
-              >
-                Referanslar
-              </Text>
-              <Title level={2} style={{ marginTop: 12, marginBottom: 16 }}>
-                Müşterilerimiz Ne Diyor?
-              </Title>
+              </div>
+              <div className="lp-scanline" />
             </div>
 
-            <Row gutter={[32, 32]}>
-              {testimonials.map((testimonial, index) => (
-                <Col xs={24} md={8} key={index}>
-                  <Card
-                    style={{
-                      height: '100%',
-                      borderRadius: 16,
-                      border: 'none',
-                      boxShadow: '0 4px 24px rgba(0, 0, 0, 0.06)',
-                    }}
-                    bodyStyle={{ padding: 32 }}
-                  >
-                    <div style={{ marginBottom: 16 }}>
-                      {[...Array(5)].map((_, i) => (
-                        <StarFilled key={i} style={{ color: '#fbbf24', marginRight: 4 }} />
-                      ))}
-                    </div>
-                    <Paragraph style={{ color: '#475569', fontSize: 15, lineHeight: 1.7 }}>
-                      "{testimonial.content}"
-                    </Paragraph>
-                    <Divider style={{ margin: '20px 0' }} />
-                    <Space>
-                      <Avatar style={{ background: '#1e3a5f' }}>{testimonial.avatar}</Avatar>
-                      <div>
-                        <Text strong>{testimonial.name}</Text>
-                        <br />
-                        <Text type="secondary" style={{ fontSize: 13 }}>
-                          {testimonial.role}, {testimonial.company}
-                        </Text>
-                      </div>
-                    </Space>
-                  </Card>
-                </Col>
-              ))}
-            </Row>
-          </div>
-        </div>
-
-        {/* Pricing Section */}
-        <div id="pricing" style={{ padding: '100px 50px', background: '#fff' }}>
-          <div style={{ maxWidth: 1200, margin: '0 auto' }}>
-            <div style={{ textAlign: 'center', marginBottom: 60 }}>
-              <Text
-                style={{
-                  color: '#1e3a5f',
-                  fontWeight: 600,
-                  textTransform: 'uppercase',
-                  letterSpacing: 2,
-                  fontSize: 13,
-                }}
-              >
-                Fiyatlandırma
-              </Text>
-              <Title level={2} style={{ marginTop: 12, marginBottom: 16 }}>
-                Şirketinize Uygun Plan Seçin
-              </Title>
-              <Paragraph style={{ color: '#64748b', fontSize: 16, maxWidth: 600, margin: '0 auto' }}>
-                Tüm planlar 14 günlük ücretsiz deneme süresi içerir. İstediğiniz zaman iptal edebilirsiniz.
-              </Paragraph>
+            <div className="lp-float lp-float-a">
+              <div className="lp-float-icon lp-green"><CheckCircleFilled /></div>
+              <div>
+                <strong>100% coverage</strong>
+                <span>All slots filled</span>
+              </div>
             </div>
+            <div className="lp-float lp-float-b">
+              <div className="lp-float-icon lp-pink"><HeartOutlined /></div>
+              <div>
+                <strong>99% preference match</strong>
+                <span>Preferred shifts honoured</span>
+              </div>
+            </div>
+            <div className="lp-float lp-float-c">
+              <div className="lp-float-icon lp-blue"><ClockCircleOutlined /></div>
+              <div>
+                <strong>11 h minimum rest</strong>
+                <span>Never violated</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
 
-            <Row gutter={[32, 32]} justify="center">
-              {pricingPlans.map((plan, index) => (
-                <Col xs={24} md={8} key={index}>
-                  <Card
-                    style={{
-                      height: '100%',
-                      borderRadius: 16,
-                      border: plan.highlighted ? '2px solid #1e3a5f' : '1px solid #e2e8f0',
-                      position: 'relative',
-                      overflow: 'visible',
-                    }}
-                    bodyStyle={{ padding: 32 }}
-                  >
-                    {plan.highlighted && (
-                      <div
-                        style={{
-                          position: 'absolute',
-                          top: -12,
-                          left: '50%',
-                          transform: 'translateX(-50%)',
-                          background: '#1e3a5f',
-                          color: '#fff',
-                          padding: '4px 16px',
-                          borderRadius: 20,
-                          fontSize: 12,
-                          fontWeight: 600,
-                        }}
-                      >
-                        En Popüler
-                      </div>
-                    )}
-                    <Title level={4} style={{ marginBottom: 8 }}>
-                      {plan.name}
-                    </Title>
-                    <Text type="secondary">{plan.description}</Text>
-                    <div style={{ margin: '24px 0' }}>
-                      <Title level={2} style={{ marginBottom: 0, display: 'inline' }}>
-                        {plan.price}
-                      </Title>
-                      <Text type="secondary">{plan.period}</Text>
-                    </div>
-                    <List
-                      dataSource={plan.features}
-                      renderItem={(item) => (
-                        <List.Item style={{ border: 'none', padding: '8px 0' }}>
-                          <Space>
-                            <CheckCircleOutlined style={{ color: '#22c55e' }} />
-                            <Text>{item}</Text>
-                          </Space>
-                        </List.Item>
-                      )}
-                    />
-                    <Button
-                      type={plan.highlighted ? 'primary' : 'default'}
-                      size="large"
-                      block
-                      style={{ marginTop: 24, height: 48 }}
-                      onClick={() => router.push('/register')}
-                    >
-                      {plan.price === 'Özel Fiyat' ? 'İletişime Geç' : 'Hemen Başla'}
-                    </Button>
-                  </Card>
-                </Col>
+      {/* ------------------------------------------------ Numbers */}
+      <section className="lp-numbers">
+        <div className="lp-container lp-numbers-grid">
+          {[
+            { value: <CountUp to={200} suffix="+" />, label: 'employees scheduled in one run' },
+            { value: <CountUp to={2} suffix=" s" />, label: 'to plan a full week' },
+            { value: <CountUp to={99.4} decimals={1} suffix="%" />, label: 'preference match on the demo data' },
+            { value: <CountUp to={13} />, label: 'security rules in the Security AI engine' },
+          ].map((item, i) => (
+            <div className="lp-number reveal" style={{ transitionDelay: `${i * 90}ms` }} key={i}>
+              <div className="lp-number-value">{item.value}</div>
+              <div className="lp-number-label">{item.label}</div>
+            </div>
+          ))}
+        </div>
+        <p className="lp-footnote lp-container">Measured on the synthetic 200-person demo workforce included in the repository.</p>
+      </section>
+
+      {/* ------------------------------------------------ Features */}
+      <section className="lp-section" id="features">
+        <div className="lp-container">
+          <div className="lp-section-head reveal">
+            <span className="lp-eyebrow">Features</span>
+            <h2>Everything a shift manager needs, nothing they have to babysit.</h2>
+          </div>
+          <div className="lp-features">
+            {FEATURES.map((f, i) => (
+              <div className="lp-feature reveal" key={f.title} style={{ transitionDelay: `${(i % 3) * 90}ms` }}>
+                <div className="lp-feature-icon">{f.icon}</div>
+                <h3>{f.title}</h3>
+                <p>{f.text}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ------------------------------------------------ How it works */}
+      <section className="lp-section lp-section-tint" id="how">
+        <div className="lp-container">
+          <div className="lp-section-head reveal">
+            <span className="lp-eyebrow">How it works</span>
+            <h2>From rules to a published schedule in three steps.</h2>
+          </div>
+          <div className="lp-steps">
+            {STEPS.map((s, i) => (
+              <div className="lp-step reveal" key={s.n} style={{ transitionDelay: `${i * 120}ms` }}>
+                <span className="lp-step-n">{s.n}</span>
+                <h3>{s.title}</h3>
+                <p>{s.text}</p>
+              </div>
+            ))}
+          </div>
+
+          <div className="lp-score reveal">
+            <div className="lp-score-copy">
+              <h3>Every schedule comes with a score you can explain.</h3>
+              <p>
+                The optimizer reports how many required slots were filled, how often people got the shift they
+                asked for, and how evenly hours are spread — so trade-offs are visible, not hidden.
+              </p>
+            </div>
+            <div className="lp-score-bars">
+              {[
+                { label: 'Coverage', value: 100 },
+                { label: 'Preference match', value: 99.4 },
+                { label: 'Fairness', value: 84.1 },
+              ].map((b) => (
+                <div className="lp-bar" key={b.label}>
+                  <div className="lp-bar-top"><span>{b.label}</span><strong>{b.value}%</strong></div>
+                  <div className="lp-bar-track"><div className="lp-bar-fill" style={{ ['--w' as string]: `${b.value}%` }} /></div>
+                </div>
               ))}
-            </Row>
+            </div>
           </div>
         </div>
+      </section>
 
-        {/* CTA Section */}
-        <div
-          style={{
-            background: 'linear-gradient(135deg, #1e3a5f 0%, #2d5a87 100%)',
-            padding: '80px 50px',
-            textAlign: 'center',
-          }}
-        >
-          <div style={{ maxWidth: 800, margin: '0 auto' }}>
-            <Title level={2} style={{ color: '#fff', marginBottom: 16 }}>
-              Vardiya Planlamada Yeni Nesil Deneyim
-            </Title>
-            <Paragraph style={{ color: 'rgba(255, 255, 255, 0.85)', fontSize: 18, marginBottom: 32 }}>
-              Şirketinizi ShiftMaster AI ile tanıştırın. 14 gün ücretsiz deneyin, 
-              farkı hemen görün.
-            </Paragraph>
-            <Space size="middle">
-              <Button
-                type="primary"
-                size="large"
-                onClick={() => router.push('/register')}
-                style={{
-                  height: 50,
-                  paddingLeft: 40,
-                  paddingRight: 40,
-                  fontSize: 16,
-                  background: '#fff',
-                  color: '#1e3a5f',
-                  border: 'none',
-                }}
-              >
-                Ücretsiz Kayıt Ol
-              </Button>
-              <Button
-                size="large"
-                icon={<CustomerServiceOutlined />}
-                style={{
-                  height: 50,
-                  paddingLeft: 32,
-                  paddingRight: 32,
-                  fontSize: 16,
-                  background: 'transparent',
-                  color: '#fff',
-                  borderColor: 'rgba(255, 255, 255, 0.5)',
-                }}
-              >
-                Demo Talep Et
-              </Button>
-            </Space>
+      {/* ------------------------------------------------ Mobile */}
+      <section className="lp-section" id="mobile">
+        <div className="lp-container lp-split">
+          <div className="lp-split-copy reveal">
+            <span className="lp-eyebrow">For employees</span>
+            <h2>The schedule in every pocket — even offline.</h2>
+            <p>
+              The Flutter app shows each employee their week, lets them request leave and set shift preferences,
+              and keeps working without a connection. Changes sync automatically when the device is back online.
+            </p>
+            <ul className="lp-list">
+              <li><MobileOutlined /> Weekly shift view and notifications</li>
+              <li><CalendarOutlined /> Leave requests with live status</li>
+              <li><HeartOutlined /> Preferred shifts and days off</li>
+              <li><CloudSyncOutlined /> Offline-first sync with retry</li>
+            </ul>
+          </div>
+          <div className="lp-phone-wrap reveal">
+            <div className="lp-phone">
+              <div className="lp-phone-notch" />
+              <div className="lp-phone-screen">
+                <div className="lp-phone-greet">Good morning, Hannah</div>
+                <div className="lp-phone-next">
+                  <span>Next shift</span>
+                  <strong>Tomorrow · 06:00 – 14:00</strong>
+                  <em>Morning · Engineering</em>
+                </div>
+                {['Mon', 'Tue', 'Wed', 'Thu', 'Fri'].map((d, i) => (
+                  <div className="lp-phone-row" key={d} style={{ animationDelay: `${i * 140}ms` }}>
+                    <b>{d}</b>
+                    <span className={`lp-chip lp-chip-${['m', 'm', 'm', '', 'm'][i] || 'off'}`}>{['Morning', 'Morning', 'Morning', 'Day off', 'Morning'][i]}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
         </div>
+      </section>
 
-        {/* Contact Section */}
-        <div id="contact" style={{ padding: '80px 50px', background: '#f8fafc' }}>
-          <Row gutter={[64, 48]} style={{ maxWidth: 1200, margin: '0 auto' }}>
-            <Col xs={24} md={8}>
-              <Title level={4}>ShiftMaster AI</Title>
-              <Paragraph style={{ color: '#64748b' }}>
-                Yapay zeka destekli vardiya planlama çözümü ile iş gücü yönetiminizi dönüştürün.
-              </Paragraph>
-              <Space>
-                <BankOutlined style={{ fontSize: 20, color: '#1e3a5f' }} />
-                <GlobalOutlined style={{ fontSize: 20, color: '#1e3a5f' }} />
-                <CustomerServiceOutlined style={{ fontSize: 20, color: '#1e3a5f' }} />
-              </Space>
-            </Col>
-            <Col xs={24} md={8}>
-              <Title level={5}>Ürün</Title>
-              <Space direction="vertical" size={8}>
-                <Text style={{ color: '#64748b', cursor: 'pointer' }}>Özellikler</Text>
-                <Text style={{ color: '#64748b', cursor: 'pointer' }}>Fiyatlandırma</Text>
-                <Text style={{ color: '#64748b', cursor: 'pointer' }}>Entegrasyonlar</Text>
-                <Text style={{ color: '#64748b', cursor: 'pointer' }}>API Dokümantasyonu</Text>
-              </Space>
-            </Col>
-            <Col xs={24} md={8}>
-              <Title level={5}>İletişim</Title>
-              <Space direction="vertical" size={8}>
-                <Text style={{ color: '#64748b' }}>📧 info@shiftmaster.ai</Text>
-                <Text style={{ color: '#64748b' }}>📞 +90 212 555 0000</Text>
-                <Text style={{ color: '#64748b' }}>📍 İstanbul, Türkiye</Text>
-              </Space>
-            </Col>
-          </Row>
+      {/* ------------------------------------------------ Security */}
+      <section className="lp-section lp-section-dark" id="security">
+        <div className="lp-container lp-split lp-split-reverse">
+          <div className="lp-split-copy reveal">
+            <span className="lp-eyebrow lp-eyebrow-light">Security AI module</span>
+            <h2>Built-in code scanning with a hybrid rule + ML engine.</h2>
+            <p>
+              The platform ships with a vulnerability scanner mapped to OWASP Top 10 and CWE. Critical rules always
+              take precedence, so known high-impact issues are never suppressed.
+            </p>
+            <ul className="lp-list lp-list-light">
+              <li><SafetyCertificateOutlined /> SQL & command injection, hardcoded secrets, weak crypto</li>
+              <li><ApiOutlined /> Every finding includes line numbers and a fix</li>
+              <li><BarChartOutlined /> Scan history and severity analytics</li>
+            </ul>
+          </div>
+          <div className="lp-code reveal">
+            <div className="lp-code-bar"><span /><span /><span /><em>payments.py</em></div>
+            <pre>
+              <code>
+                <span className="ln">5</span>def get_user(cursor, user_id):{'\n'}
+                <span className="ln">6</span>    <mark className="lp-hit">cursor.execute(&quot;SELECT … &quot; + user_id)</mark>{'\n'}
+                <span className="ln">7</span>{'\n'}
+                <span className="ln">8</span>def run(cmd):{'\n'}
+                <span className="ln">9</span>    <mark className="lp-hit lp-hit-2">os.system(&quot;ping &quot; + cmd)</mark>
+              </code>
+            </pre>
+            <div className="lp-findings">
+              <div className="lp-finding" style={{ animationDelay: '0.2s' }}><b>CRITICAL</b> SQL Injection · CWE-89 · line 6</div>
+              <div className="lp-finding" style={{ animationDelay: '0.5s' }}><b>CRITICAL</b> Command Injection · CWE-78 · line 9</div>
+            </div>
+          </div>
         </div>
-      </Content>
+      </section>
 
-      {/* Footer */}
-      <Footer
-        style={{
-          background: '#1e3a5f',
-          padding: '24px 50px',
-          textAlign: 'center',
-        }}
-      >
-        <Text style={{ color: 'rgba(255, 255, 255, 0.7)' }}>
-          © 2024 ShiftMaster AI. Tüm hakları saklıdır. | Gizlilik Politikası | Kullanım Koşulları
-        </Text>
-      </Footer>
-    </Layout>
+      {/* ------------------------------------------------ Stack */}
+      <section className="lp-stack">
+        <div className="lp-container">
+          <p className="lp-stack-title">Built with a modern, open stack</p>
+          <div className="lp-marquee">
+            <div className="lp-marquee-track">
+              {[...STACK, ...STACK].map((s, i) => <span key={i}>{s}</span>)}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ------------------------------------------------ CTA */}
+      <section className="lp-cta">
+        <div className="lp-container lp-cta-inner reveal">
+          <h2>Plan next week before your coffee gets cold.</h2>
+          <p>Explore the demo workspace with 200 synthetic employees, or create your own account.</p>
+          <div className="lp-hero-cta">
+            <Link href="/register" className="lp-btn lp-btn-white lp-btn-lg">Create account <ArrowRightOutlined /></Link>
+            <Link href="/login" className="lp-btn lp-btn-outline-light lp-btn-lg"><TeamOutlined /> Open the demo</Link>
+          </div>
+        </div>
+      </section>
+
+      <footer className="lp-footer">
+        <div className="lp-container lp-footer-inner">
+          <div className="lp-brand lp-brand-small">
+            <span className="lp-brand-mark"><CalendarOutlined /></span>
+            ShiftMaster AI
+          </div>
+          <span>© {new Date().getFullYear()} ShiftMaster AI · MIT License</span>
+          <a href="https://github.com/LordAurora/shift-planning-application" target="_blank" rel="noreferrer">
+            <GithubOutlined /> Source code
+          </a>
+        </div>
+      </footer>
+    </div>
   );
 }

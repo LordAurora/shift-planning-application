@@ -1,12 +1,19 @@
 'use client';
 
-import React, { useState } from 'react';
-import { Form, Input, Button, Card, Typography, Alert, Space } from 'antd';
-import { UserOutlined, LockOutlined } from '@ant-design/icons';
+import React from 'react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { Alert, Button, Form, Input, Typography } from 'antd';
+import { CheckCircleFilled, LockOutlined, MailOutlined } from '@ant-design/icons';
 import { useAuthStore } from '../store/authStore';
 
 const { Title, Text } = Typography;
+
+const highlights = [
+  'Schedules that respect rest periods and hour caps',
+  'Preferences and days off built in',
+  'Real-time updates for managers and employees',
+];
 
 export default function LoginPage() {
   const [form] = Form.useForm();
@@ -14,120 +21,65 @@ export default function LoginPage() {
   const { login, isLoading, error, clearError } = useAuthStore();
 
   const handleSubmit = async (values: { email: string; password: string }) => {
-    const success = await login(values.email, values.password);
-    if (success) {
+    if (await login(values.email, values.password)) {
       router.push('/dashboard');
     }
   };
 
+  const fillDemo = () => form.setFieldsValue({ email: 'admin@example.com', password: 'admin123' });
+
   return (
-    <div
-      style={{
-        minHeight: '100vh',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        background: '#f5f5f5',
-        padding: 24,
-      }}
-    >
-      <Card
-        style={{
-          width: '100%',
-          maxWidth: 420,
-          boxShadow: '0 2px 8px rgba(0, 0, 0, 0.08)',
-        }}
-        bordered={false}
-      >
-        <div style={{ textAlign: 'center', marginBottom: 32 }}>
-          <Title level={2} style={{ marginBottom: 8, color: '#1e3a5f' }}>
-            ShiftMaster AI
-          </Title>
-          <Text type="secondary">AI-Powered Shift Planning System</Text>
+    <div className="auth-shell">
+      <aside className="auth-brand">
+        <Link href="/landing" className="auth-logo">ShiftMaster AI</Link>
+        <div>
+          <h2>Welcome back.</h2>
+          <ul>
+            {highlights.map((h) => (
+              <li key={h}><CheckCircleFilled /> {h}</li>
+            ))}
+          </ul>
         </div>
+        <p className="auth-foot">AI-assisted workforce scheduling</p>
+      </aside>
 
-        {error && (
-          <Alert
-            message={error}
-            type="error"
-            showIcon
-            closable
-            onClose={clearError}
-            style={{ marginBottom: 24 }}
-          />
-        )}
+      <main className="auth-panel">
+        <div className="auth-card">
+          <Title level={2} style={{ marginBottom: 4 }}>Sign in</Title>
+          <Text type="secondary">Access your scheduling workspace.</Text>
 
-        <Form
-          form={form}
-          layout="vertical"
-          onFinish={handleSubmit}
-          size="large"
-          requiredMark={false}
-        >
-          <Form.Item
-            name="email"
-            label="Email"
-            rules={[
-              { required: true, message: 'Please enter your email' },
-              { type: 'email', message: 'Please enter a valid email' },
-            ]}
-          >
-            <Input prefix={<UserOutlined />} placeholder="Enter your email" autoComplete="email" />
-          </Form.Item>
+          {error && (
+            <Alert title={error} type="error" showIcon closable onClose={clearError} style={{ marginTop: 24 }} />
+          )}
 
-          <Form.Item
-            name="password"
-            label="Password"
-            rules={[{ required: true, message: 'Please enter your password' }]}
-          >
-            <Input.Password
-              prefix={<LockOutlined />}
-              placeholder="Enter your password"
-              autoComplete="current-password"
-            />
-          </Form.Item>
-
-          <Form.Item style={{ marginBottom: 16 }}>
-            <Button
-              type="primary"
-              htmlType="submit"
-              loading={isLoading}
-              block
-              style={{ height: 44 }}
+          <Form form={form} layout="vertical" onFinish={handleSubmit} size="large" requiredMark={false} style={{ marginTop: 24 }}>
+            <Form.Item
+              name="email"
+              label="Email"
+              rules={[
+                { required: true, message: 'Please enter your email' },
+                { type: 'email', message: 'Please enter a valid email' },
+              ]}
             >
-              Sign In
-            </Button>
-          </Form.Item>
-        </Form>
+              <Input prefix={<MailOutlined />} placeholder="you@company.com" autoComplete="email" />
+            </Form.Item>
+            <Form.Item name="password" label="Password" rules={[{ required: true, message: 'Please enter your password' }]}>
+              <Input.Password prefix={<LockOutlined />} placeholder="Your password" autoComplete="current-password" />
+            </Form.Item>
+            <Button type="primary" htmlType="submit" loading={isLoading} block>Sign in</Button>
+          </Form>
 
-        <div
-          style={{
-            textAlign: 'center',
-            padding: '16px 0',
-            borderTop: '1px solid #f0f0f0',
-            marginTop: 16,
-          }}
-        >
-          <Text type="secondary" style={{ fontSize: 13 }}>
-            Henüz hesabınız yok mu?{' '}
-            <a
-              onClick={() => router.push('/register')}
-              style={{ color: '#1e3a5f', fontWeight: 500, cursor: 'pointer' }}
-            >
-              Şirketinizi Kayıt Edin
-            </a>
-          </Text>
-          <br />
-          <br />
-          <Text type="secondary" style={{ fontSize: 12 }}>
-            Demo Credentials:
-          </Text>
-          <br />
-          <Text type="secondary" style={{ fontSize: 12 }}>
-            admin@example.com / admin123
-          </Text>
+          <div className="auth-demo">
+            <Text type="secondary" style={{ fontSize: 13 }}>Exploring the demo?</Text>
+            <Button type="link" size="small" onClick={fillDemo}>Use the admin demo account</Button>
+          </div>
+
+          <div style={{ textAlign: 'center', marginTop: 16 }}>
+            <Text type="secondary">New to ShiftMaster AI? </Text>
+            <Link href="/register">Create an account</Link>
+          </div>
         </div>
-      </Card>
+      </main>
     </div>
   );
 }

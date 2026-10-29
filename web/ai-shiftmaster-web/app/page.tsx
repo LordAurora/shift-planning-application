@@ -13,7 +13,7 @@ export default function Home() {
     if (isAuthenticated) {
       router.push('/dashboard');
     } else {
-      // Giriş yapmamış kullanıcıları landing page'e yönlendir
+      // Visitors who are not signed in see the landing page
       router.push('/landing');
     }
   }, [isAuthenticated, router]);
