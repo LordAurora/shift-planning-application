@@ -49,7 +49,7 @@ class _WeeklyShiftsScreenState extends State<WeeklyShiftsScreen> {
               shiftProvider.currentWeek();
             },
             icon: const Icon(Icons.today),
-            tooltip: 'Bu Hafta',
+            tooltip: 'This week',
           ),
         ],
       ),
@@ -59,7 +59,7 @@ class _WeeklyShiftsScreenState extends State<WeeklyShiftsScreen> {
         child: Consumer<ShiftProvider>(
           builder: (context, shiftProvider, _) {
             if (shiftProvider.isLoading) {
-              return const LoadingWidget(message: 'Vardiyalar yükleniyor...');
+              return const LoadingWidget(message: 'Loading shifts...');
             }
 
             return Column(
@@ -118,7 +118,7 @@ class _WeeklyShiftsScreenState extends State<WeeklyShiftsScreen> {
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: const Text(
-                      'Bu Hafta',
+                      'This week',
                       style: TextStyle(
                         fontSize: 11,
                         fontWeight: FontWeight.w600,
@@ -226,7 +226,7 @@ class _WeeklyShiftsScreenState extends State<WeeklyShiftsScreen> {
                         ),
                       ),
                       Text(
-                        DateFormat('d MMMM', 'tr_TR').format(day),
+                        DateFormat('d MMMM', 'en_US').format(day),
                         style: const TextStyle(
                           fontSize: 12,
                           color: AppColors.textSecondary,
@@ -243,7 +243,7 @@ class _WeeklyShiftsScreenState extends State<WeeklyShiftsScreen> {
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: const Text(
-                      'BUGÜN',
+                      'TODAY',
                       style: TextStyle(
                         fontSize: 10,
                         fontWeight: FontWeight.bold,
@@ -267,7 +267,7 @@ class _WeeklyShiftsScreenState extends State<WeeklyShiftsScreen> {
                   ),
                   SizedBox(width: 8),
                   Text(
-                    'Vardiya yok',
+                    'No shift',
                     style: TextStyle(
                       fontSize: 13,
                       color: AppColors.textLight,
@@ -308,7 +308,7 @@ class _WeeklyShiftsScreenState extends State<WeeklyShiftsScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  shift.departmentName ?? 'Departman',
+                  shift.departmentName ?? 'Department',
                   style: const TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w600,

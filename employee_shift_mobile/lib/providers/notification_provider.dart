@@ -104,7 +104,7 @@ class NotificationProvider extends ChangeNotifier {
       _notifications = await _notificationService.getNotifications();
       _unreadCount = _notifications.where((n) => !n.isRead).length;
     } catch (e) {
-      _errorMessage = 'Bildirimler yüklenemedi';
+      _errorMessage = 'Could not load notifications';
     } finally {
       _isLoading = false;
       notifyListeners();

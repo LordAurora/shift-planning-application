@@ -229,15 +229,15 @@ class AuthProvider extends ChangeNotifier {
   /// Hata mesajını parse et
   String _parseError(dynamic error) {
     if (error.toString().contains('401')) {
-      return 'E-posta veya şifre hatalı';
+      return 'Incorrect email or password';
     }
     if (error.toString().contains('403')) {
-      return 'Hesabınız devre dışı bırakılmış';
+      return 'Your account has been disabled';
     }
     if (error.toString().contains('network')) {
-      return 'İnternet bağlantısı yok';
+      return 'No internet connection';
     }
-    return 'Giriş yapılamadı. Lütfen tekrar deneyin.';
+    return 'Sign-in failed. Please try again.';
   }
   
   @override

@@ -1,109 +1,109 @@
-/// Uygulama metin sabitleri - Türkçe
+/// User-facing text constants
 class AppStrings {
   // Uygulama
-  static const String appName = 'ShiftMaster';
-  static const String appTagline = 'Vardiya Yönetim Sistemi';
+  static const String appName = 'ShiftMaster AI';
+  static const String appTagline = 'AI-assisted shift planning';
   
   // Genel
-  static const String loading = 'Yükleniyor...';
-  static const String retry = 'Tekrar Dene';
-  static const String cancel = 'İptal';
-  static const String confirm = 'Onayla';
-  static const String save = 'Kaydet';
-  static const String delete = 'Sil';
-  static const String edit = 'Düzenle';
-  static const String close = 'Kapat';
-  static const String ok = 'Tamam';
-  static const String yes = 'Evet';
-  static const String no = 'Hayır';
+  static const String loading = 'Loading...';
+  static const String retry = 'Try again';
+  static const String cancel = 'Cancel';
+  static const String confirm = 'Confirm';
+  static const String save = 'Save';
+  static const String delete = 'Delete';
+  static const String edit = 'Edit';
+  static const String close = 'Close';
+  static const String ok = 'OK';
+  static const String yes = 'Yes';
+  static const String no = 'No';
   
   // Giriş
-  static const String login = 'Giriş Yap';
-  static const String logout = 'Çıkış Yap';
-  static const String email = 'E-posta';
-  static const String password = 'Şifre';
-  static const String forgotPassword = 'Şifremi Unuttum';
-  static const String welcomeBack = 'Tekrar Hoş Geldiniz';
-  static const String loginSubtitle = 'Devam etmek için giriş yapın';
+  static const String login = 'Sign in';
+  static const String logout = 'Sign out';
+  static const String email = 'Email';
+  static const String password = 'Password';
+  static const String forgotPassword = 'Forgot password?';
+  static const String welcomeBack = 'Welcome back';
+  static const String loginSubtitle = 'Sign in to continue';
   
   // Ana Sayfa
-  static const String home = 'Ana Sayfa';
-  static const String todayShift = 'Bugünkü Vardiya';
-  static const String upcomingShifts = 'Yaklaşan Vardiyalar';
-  static const String noShiftToday = 'Bugün vardiya yok';
-  static const String greeting = 'Merhaba';
+  static const String home = 'Home';
+  static const String todayShift = 'Shift today';
+  static const String upcomingShifts = 'Upcoming shifts';
+  static const String noShiftToday = 'No shift today';
+  static const String greeting = 'Hello';
   
   // Vardiyalar
-  static const String shifts = 'Vardiyalar';
-  static const String weeklySchedule = 'Haftalık Vardiya';
-  static const String myShifts = 'Vardiyalarım';
-  static const String shiftDetails = 'Vardiya Detayları';
-  static const String startTime = 'Başlangıç';
-  static const String endTime = 'Bitiş';
-  static const String duration = 'Süre';
-  static const String department = 'Departman';
-  static const String location = 'Lokasyon';
+  static const String shifts = 'Shifts';
+  static const String weeklySchedule = 'Weekly schedule';
+  static const String myShifts = 'My shifts';
+  static const String shiftDetails = 'Shift details';
+  static const String startTime = 'Start';
+  static const String endTime = 'End';
+  static const String duration = 'Duration';
+  static const String department = 'Department';
+  static const String location = 'Location';
   
   // Vardiya Durumları
-  static const String scheduled = 'Planlandı';
-  static const String completed = 'Tamamlandı';
-  static const String cancelled = 'İptal Edildi';
+  static const String scheduled = 'Scheduled';
+  static const String completed = 'Completed';
+  static const String cancelled = 'Cancelled';
   
   // İzin Talepleri
-  static const String leaveRequests = 'İzin Talepleri';
-  static const String newLeaveRequest = 'Yeni İzin Talebi';
-  static const String myLeaveRequests = 'İzin Taleplerim';
-  static const String leaveType = 'İzin Türü';
-  static const String startDate = 'Başlangıç Tarihi';
-  static const String endDate = 'Bitiş Tarihi';
-  static const String reason = 'Gerekçe';
+  static const String leaveRequests = 'Leave requests';
+  static const String newLeaveRequest = 'New leave request';
+  static const String myLeaveRequests = 'My leave requests';
+  static const String leaveType = 'Leave type';
+  static const String startDate = 'Start date';
+  static const String endDate = 'End date';
+  static const String reason = 'Reason';
   
   // İzin Durumları
-  static const String pending = 'Beklemede';
-  static const String approved = 'Onaylandı';
-  static const String rejected = 'Reddedildi';
+  static const String pending = 'Pending';
+  static const String approved = 'Approved';
+  static const String rejected = 'Rejected';
   
   // Bildirimler
-  static const String notifications = 'Bildirimler';
-  static const String noNotifications = 'Bildirim yok';
-  static const String markAllRead = 'Tümünü Okundu İşaretle';
+  static const String notifications = 'Notifications';
+  static const String noNotifications = 'No notifications';
+  static const String markAllRead = 'Mark all as read';
   
   // Profil
-  static const String profile = 'Profil';
-  static const String personalInfo = 'Kişisel Bilgiler';
-  static const String settings = 'Ayarlar';
-  static const String about = 'Hakkında';
-  static const String version = 'Versiyon';
+  static const String profile = 'Profile';
+  static const String personalInfo = 'Personal information';
+  static const String settings = 'Settings';
+  static const String about = 'About';
+  static const String version = 'Version';
   
   // Hatalar
-  static const String error = 'Hata';
-  static const String networkError = 'İnternet bağlantısı yok';
-  static const String networkErrorDesc = 'Lütfen internet bağlantınızı kontrol edin';
-  static const String serverError = 'Sunucu hatası oluştu';
-  static const String sessionExpired = 'Oturumunuz sona erdi';
-  static const String sessionExpiredDesc = 'Lütfen tekrar giriş yapın';
-  static const String unknownError = 'Beklenmeyen bir hata oluştu';
-  static const String invalidCredentials = 'E-posta veya şifre hatalı';
+  static const String error = 'Error';
+  static const String networkError = 'No internet connection';
+  static const String networkErrorDesc = 'Please check your internet connection';
+  static const String serverError = 'A server error occurred';
+  static const String sessionExpired = 'Your session has expired';
+  static const String sessionExpiredDesc = 'Please sign in again';
+  static const String unknownError = 'An unexpected error occurred';
+  static const String invalidCredentials = 'Incorrect email or password';
   
   // Başarı Mesajları
-  static const String success = 'Başarılı';
-  static const String loginSuccess = 'Giriş başarılı';
-  static const String logoutSuccess = 'Çıkış yapıldı';
-  static const String leaveRequestCreated = 'İzin talebi oluşturuldu';
-  static const String dataRefreshed = 'Veriler güncellendi';
+  static const String success = 'Success';
+  static const String loginSuccess = 'Signed in';
+  static const String logoutSuccess = 'Signed out';
+  static const String leaveRequestCreated = 'Leave request created';
+  static const String dataRefreshed = 'Data refreshed';
   
   // Günler
   static const List<String> weekDays = [
-    'Pazartesi', 'Salı', 'Çarşamba', 'Perşembe', 'Cuma', 'Cumartesi', 'Pazar'
+    'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'
   ];
   
   static const List<String> weekDaysShort = [
-    'Pzt', 'Sal', 'Çar', 'Per', 'Cum', 'Cmt', 'Paz'
+    'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'
   ];
   
   // Aylar
   static const List<String> months = [
-    'Ocak', 'Şubat', 'Mart', 'Nisan', 'Mayıs', 'Haziran',
-    'Temmuz', 'Ağustos', 'Eylül', 'Ekim', 'Kasım', 'Aralık'
+    'January', 'February', 'March', 'April', 'May', 'June',
+    'July', 'August', 'September', 'October', 'November', 'December'
   ];
 }

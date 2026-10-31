@@ -35,7 +35,7 @@ class ConnectionStatusBanner extends StatelessWidget {
             const SizedBox(width: 12),
             const Expanded(
               child: Text(
-                'İnternet bağlantısı yok',
+                'No internet connection',
                 style: TextStyle(
                   color: Colors.white,
                   fontSize: 14,
@@ -50,7 +50,7 @@ class ConnectionStatusBanner extends StatelessWidget {
                   foregroundColor: Colors.white,
                   padding: const EdgeInsets.symmetric(horizontal: 12),
                 ),
-                child: const Text('Tekrar Dene'),
+                child: const Text('Try again'),
               ),
           ],
         ),
@@ -131,7 +131,7 @@ class ErrorWidget extends StatelessWidget {
               OutlinedButton.icon(
                 onPressed: onRetry,
                 icon: const Icon(Icons.refresh),
-                label: const Text('Tekrar Dene'),
+                label: const Text('Try again'),
               ),
             ],
           ],
@@ -219,7 +219,7 @@ class LastSyncIndicator extends StatelessWidget {
       children: [
         if (lastSyncTime != null)
           Text(
-            'Son güncelleme: ${_formatTime(lastSyncTime!)}',
+            'Last updated: ${_formatTime(lastSyncTime!)}',
             style: const TextStyle(
               fontSize: 11,
               color: AppColors.textLight,
@@ -248,9 +248,9 @@ class LastSyncIndicator extends StatelessWidget {
     final difference = now.difference(time);
 
     if (difference.inMinutes < 1) {
-      return 'Şimdi';
+      return 'Just now';
     } else if (difference.inMinutes < 60) {
-      return '${difference.inMinutes} dk önce';
+      return '${difference.inMinutes}m ago';
     } else {
       return '${time.hour.toString().padLeft(2, '0')}:${time.minute.toString().padLeft(2, '0')}';
     }

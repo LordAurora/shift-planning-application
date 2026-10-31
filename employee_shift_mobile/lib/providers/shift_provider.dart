@@ -125,7 +125,7 @@ class ShiftProvider extends ChangeNotifier {
       _lastSyncTime = DateTime.now();
       _errorMessage = null;
     } catch (e) {
-      _errorMessage = 'Vardiyalar yüklenemedi';
+      _errorMessage = 'Could not load shifts';
     } finally {
       _isRefreshing = false;
       notifyListeners();
@@ -147,7 +147,7 @@ class ShiftProvider extends ChangeNotifier {
       
       _lastSyncTime = DateTime.now();
     } catch (e) {
-      _errorMessage = 'Vardiyalar yüklenemedi';
+      _errorMessage = 'Could not load shifts';
     } finally {
       _isLoading = false;
       notifyListeners();

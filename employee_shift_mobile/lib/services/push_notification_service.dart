@@ -110,7 +110,7 @@ class PushNotificationService {
     required String body,
     String? payload,
     String channelId = 'default',
-    String channelName = 'Genel Bildirimler',
+    String channelName = 'General notifications',
   }) async {
     final androidDetails = AndroidNotificationDetails(
       channelId,
@@ -147,7 +147,7 @@ class PushNotificationService {
       body: body,
       payload: '/shifts/weekly',
       channelId: 'shift_changes',
-      channelName: 'Vardiya Değişiklikleri',
+      channelName: 'Shift changes',
     );
   }
   
@@ -162,7 +162,7 @@ class PushNotificationService {
       body: body,
       payload: '/home',
       channelId: 'emergency',
-      channelName: 'Acil Bildirimler',
+      channelName: 'Urgent notifications',
     );
   }
   
@@ -178,7 +178,7 @@ class PushNotificationService {
       body: body,
       payload: '/leave-requests',
       channelId: 'leave_requests',
-      channelName: 'İzin Talepleri',
+      channelName: 'Leave requests',
     );
   }
   

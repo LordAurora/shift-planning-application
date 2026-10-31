@@ -20,7 +20,7 @@ class ProfileScreen extends StatelessWidget {
         builder: (context, authProvider, _) {
           final user = authProvider.user;
           if (user == null) {
-            return const Center(child: Text('Kullanıcı bilgisi yok'));
+            return const Center(child: Text('No user information'));
           }
 
           return SingleChildScrollView(
@@ -135,18 +135,18 @@ class ProfileScreen extends StatelessWidget {
           ),
           _buildInfoItem(
             icon: Icons.badge_outlined,
-            label: 'Rol',
+            label: 'Role',
             value: _getRoleName(user.role),
           ),
           _buildInfoItem(
             icon: Icons.check_circle_outline,
-            label: 'Durum',
-            value: user.isActive ? 'Aktif' : 'Pasif',
+            label: 'Status',
+            value: user.isActive ? 'Active' : 'Inactive',
             valueColor: user.isActive ? AppColors.success : AppColors.error,
           ),
           _buildInfoItem(
             icon: Icons.calendar_today_outlined,
-            label: 'Kayıt Tarihi',
+            label: 'Member since',
             value: _formatDate(user.createdAt),
           ),
         ],
@@ -329,7 +329,7 @@ class ProfileScreen extends StatelessWidget {
       context: context,
       builder: (context) => AlertDialog(
         title: const Text(AppStrings.logout),
-        content: const Text('Çıkış yapmak istediğinizden emin misiniz?'),
+        content: const Text('Are you sure you want to sign out?'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
@@ -361,11 +361,11 @@ class ProfileScreen extends StatelessWidget {
   String _getRoleName(UserRole role) {
     switch (role) {
       case UserRole.admin:
-        return 'Yönetici';
+        return 'Administrator';
       case UserRole.manager:
-        return 'Müdür';
+        return 'Manager';
       case UserRole.employee:
-        return 'Çalışan';
+        return 'Employee';
     }
   }
 

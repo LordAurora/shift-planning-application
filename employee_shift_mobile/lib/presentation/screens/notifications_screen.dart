@@ -49,13 +49,13 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
       body: Consumer<NotificationProvider>(
         builder: (context, notificationProvider, _) {
           if (notificationProvider.isLoading) {
-            return const LoadingWidget(message: 'Bildirimler yükleniyor...');
+            return const LoadingWidget(message: 'Loading notifications...');
           }
 
           if (notificationProvider.notifications.isEmpty) {
             return const EmptyStateWidget(
               title: AppStrings.noNotifications,
-              subtitle: 'Henüz bildiriminiz bulunmuyor',
+              subtitle: 'You have no notifications yet',
               icon: Icons.notifications_off_outlined,
             );
           }
@@ -85,7 +85,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                     notificationProvider.deleteNotification(notification.id);
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(
-                        content: Text('Bildirim silindi'),
+                        content: Text('Notification deleted'),
                         duration: Duration(seconds: 2),
                       ),
                     );

@@ -30,7 +30,7 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   
   // Türkçe tarih formatı için
-  await initializeDateFormatting('tr_TR', null);
+  await initializeDateFormatting('en_US', null);
   
   // Sistem UI ayarları
   SystemChrome.setSystemUIOverlayStyle(

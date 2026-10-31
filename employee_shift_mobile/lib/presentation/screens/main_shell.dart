@@ -66,13 +66,13 @@ class _MainShellState extends State<MainShell> {
                   index: 2,
                   icon: Icons.beach_access_outlined,
                   activeIcon: Icons.beach_access_rounded,
-                  label: 'İzin',
+                  label: 'Leave',
                 ),
                 _buildNavItem(
                   index: 3,
                   icon: Icons.tune_outlined,
                   activeIcon: Icons.tune_rounded,
-                  label: 'Tercihler',
+                  label: 'Preferences',
                 ),
                 _buildNavItem(
                   index: 4,

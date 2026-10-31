@@ -90,7 +90,7 @@ class _HomeScreenState extends State<HomeScreen> {
                               ),
                               const SizedBox(height: 4),
                               Text(
-                                auth.user?.name ?? 'Kullanıcı',
+                                auth.user?.name ?? 'User',
                                 style: const TextStyle(
                                   fontSize: 22,
                                   fontWeight: FontWeight.bold,
@@ -167,7 +167,7 @@ class _HomeScreenState extends State<HomeScreen> {
         if (shiftProvider.isLoading) {
           return const Padding(
             padding: EdgeInsets.only(top: 100),
-            child: LoadingWidget(message: 'Vardiyalar yükleniyor...'),
+            child: LoadingWidget(message: 'Loading shifts...'),
           );
         }
 
@@ -276,7 +276,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                   SizedBox(height: 4),
                   Text(
-                    'Bugün için planlanmış vardiya yok',
+                    'No shift planned for today',
                     style: TextStyle(
                       fontSize: 13,
                       color: AppColors.textSecondary,
@@ -322,7 +322,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         ),
                         SizedBox(width: 4),
                         Text(
-                          'Aktif Vardiya',
+                          'Active shift',
                           style: TextStyle(
                             fontSize: 12,
                             fontWeight: FontWeight.w600,
@@ -334,7 +334,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                   const Spacer(),
                   Text(
-                    activeShift.departmentName ?? 'Departman',
+                    activeShift.departmentName ?? 'Department',
                     style: const TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w500,
@@ -347,7 +347,7 @@ class _HomeScreenState extends State<HomeScreen> {
               Row(
                 children: [
                   _buildTimeColumn(
-                    label: 'Başlangıç',
+                    label: 'Start',
                     time: DateFormat('HH:mm').format(activeShift.startTime),
                     isPast: true,
                   ),
@@ -358,7 +358,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                   const SizedBox(width: 24),
                   _buildTimeColumn(
-                    label: 'Bitiş',
+                    label: 'End',
                     time: DateFormat('HH:mm').format(activeShift.endTime),
                     isPast: false,
                   ),
@@ -367,7 +367,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     crossAxisAlignment: CrossAxisAlignment.end,
                     children: [
                       const Text(
-                        'Kalan Süre',
+                        'Time left',
                         style: TextStyle(
                           fontSize: 11,
                           color: AppColors.textLight,
@@ -442,7 +442,7 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
               TextButton(
                 onPressed: () => Navigator.of(context).pushNamed('/shifts/weekly'),
-                child: const Text('Tümünü Gör'),
+                child: const Text('See all'),
               ),
             ],
           ),
@@ -452,7 +452,7 @@ class _HomeScreenState extends State<HomeScreen> {
           const Padding(
             padding: EdgeInsets.symmetric(horizontal: 16),
             child: Text(
-              'Yaklaşan vardiya yok',
+              'No upcoming shifts',
               style: TextStyle(
                 fontSize: 14,
                 color: AppColors.textSecondary,
@@ -478,7 +478,7 @@ class _HomeScreenState extends State<HomeScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Text(
-            'Hızlı İşlemler',
+            'Quick actions',
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.w600,
@@ -491,7 +491,7 @@ class _HomeScreenState extends State<HomeScreen> {
               Expanded(
                 child: _buildQuickActionCard(
                   icon: Icons.calendar_view_week_rounded,
-                  title: 'Haftalık\nVardiya',
+                  title: 'Weekly\nSchedule',
                   color: AppColors.primary,
                   onTap: () => Navigator.of(context).pushNamed('/shifts/weekly'),
                 ),
@@ -500,7 +500,7 @@ class _HomeScreenState extends State<HomeScreen> {
               Expanded(
                 child: _buildQuickActionCard(
                   icon: Icons.beach_access_rounded,
-                  title: 'İzin\nTalebi',
+                  title: 'Leave\nRequest',
                   color: AppColors.secondary,
                   onTap: () => Navigator.of(context).pushNamed('/leave-requests'),
                 ),
@@ -561,11 +561,11 @@ class _HomeScreenState extends State<HomeScreen> {
   String _getGreeting() {
     final hour = DateTime.now().hour;
     if (hour < 12) {
-      return 'Günaydın';
+      return 'Good morning';
     } else if (hour < 18) {
-      return 'İyi günler';
+      return 'Good afternoon';
     } else {
-      return 'İyi akşamlar';
+      return 'Good evening';
     }
   }
 
@@ -579,8 +579,8 @@ class _HomeScreenState extends State<HomeScreen> {
     final minutes = difference.inMinutes % 60;
     
     if (hours > 0) {
-      return '${hours}s ${minutes}dk';
+      return '${hours}h ${minutes}m';
     }
-    return '${minutes}dk';
+    return '${minutes}m';
   }
 }

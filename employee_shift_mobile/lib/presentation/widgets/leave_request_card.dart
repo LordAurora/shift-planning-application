@@ -46,7 +46,7 @@ class LeaveRequestCard extends StatelessWidget {
                         ),
                         const SizedBox(height: 2),
                         Text(
-                          '${request.totalDays} gün',
+                          '${request.totalDays} days',
                           style: const TextStyle(
                             fontSize: 13,
                             color: AppColors.textSecondary,
@@ -65,7 +65,7 @@ class LeaveRequestCard extends StatelessWidget {
                 children: [
                   Expanded(
                     child: _buildDateInfo(
-                      label: 'Başlangıç',
+                      label: 'Start',
                       date: request.startDate,
                     ),
                   ),
@@ -76,7 +76,7 @@ class LeaveRequestCard extends StatelessWidget {
                   ),
                   Expanded(
                     child: _buildDateInfo(
-                      label: 'Bitiş',
+                      label: 'End',
                       date: request.endDate,
                       alignment: CrossAxisAlignment.end,
                     ),
@@ -140,7 +140,7 @@ class LeaveRequestCard extends StatelessWidget {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              'Yönetici Notu',
+                              'Manager note',
                               style: TextStyle(
                                 fontSize: 11,
                                 fontWeight: FontWeight.w600,
@@ -172,7 +172,7 @@ class LeaveRequestCard extends StatelessWidget {
                       foregroundColor: AppColors.error,
                       side: const BorderSide(color: AppColors.error),
                     ),
-                    child: const Text('Talebi İptal Et'),
+                    child: const Text('Cancel request'),
                   ),
                 ),
               ],
@@ -234,7 +234,7 @@ class LeaveRequestCard extends StatelessWidget {
         ),
         const SizedBox(height: 4),
         Text(
-          DateFormat('d MMM yyyy', 'tr_TR').format(date),
+          DateFormat('d MMM yyyy', 'en_US').format(date),
           style: const TextStyle(
             fontSize: 14,
             fontWeight: FontWeight.w600,

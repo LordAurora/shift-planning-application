@@ -17,11 +17,11 @@ enum ShiftStatus {
   String get displayName {
     switch (this) {
       case ShiftStatus.scheduled:
-        return 'Planlandı';
+        return 'Scheduled';
       case ShiftStatus.completed:
-        return 'Tamamlandı';
+        return 'Completed';
       case ShiftStatus.cancelled:
-        return 'İptal Edildi';
+        return 'Cancelled';
     }
   }
 }
@@ -93,9 +93,9 @@ class Shift {
     final hours = duration.inHours;
     final minutes = duration.inMinutes % 60;
     if (minutes == 0) {
-      return '$hours saat';
+      return '${hours}h';
     }
-    return '$hours saat $minutes dk';
+    return '${hours}h ${minutes}m';
   }
 
   /// Bugünkü vardiya mı?

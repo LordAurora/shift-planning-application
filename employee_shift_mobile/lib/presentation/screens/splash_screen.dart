@@ -35,7 +35,7 @@ class SplashScreen extends StatelessWidget {
             ),
             const SizedBox(height: 32),
             const Text(
-              'ShiftMaster',
+              'ShiftMaster AI',
               style: TextStyle(
                 fontSize: 32,
                 fontWeight: FontWeight.bold,
@@ -45,7 +45,7 @@ class SplashScreen extends StatelessWidget {
             ),
             const SizedBox(height: 8),
             Text(
-              'Vardiya Yönetim Sistemi',
+              'AI-assisted shift planning',
               style: TextStyle(
                 fontSize: 16,
                 color: Colors.white.withOpacity(0.8),

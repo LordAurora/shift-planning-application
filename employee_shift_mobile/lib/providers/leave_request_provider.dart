@@ -107,7 +107,7 @@ class LeaveRequestProvider extends ChangeNotifier {
     try {
       await _fetchMyRequests();
     } catch (e) {
-      _errorMessage = 'İzin talepleri yüklenemedi';
+      _errorMessage = 'Could not load leave requests';
     } finally {
       _isLoading = false;
       notifyListeners();
@@ -144,7 +144,7 @@ class LeaveRequestProvider extends ChangeNotifier {
       notifyListeners();
       return true;
     } catch (e) {
-      _errorMessage = 'İzin talebi oluşturulamadı';
+      _errorMessage = 'Could not create the leave request';
       _isSubmitting = false;
       notifyListeners();
       return false;
@@ -159,7 +159,7 @@ class LeaveRequestProvider extends ChangeNotifier {
       notifyListeners();
       return true;
     } catch (e) {
-      _errorMessage = 'İzin talebi iptal edilemedi';
+      _errorMessage = 'Could not cancel the leave request';
       notifyListeners();
       return false;
     }

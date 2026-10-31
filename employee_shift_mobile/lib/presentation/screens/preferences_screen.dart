@@ -30,27 +30,27 @@ class _PreferencesScreenState extends State<PreferencesScreen> {
   bool _isLoading = false;
 
   final List<Map<String, String>> _weekDays = [
-    {'key': 'monday', 'label': 'Pazartesi'},
-    {'key': 'tuesday', 'label': 'Salı'},
-    {'key': 'wednesday', 'label': 'Çarşamba'},
-    {'key': 'thursday', 'label': 'Perşembe'},
-    {'key': 'friday', 'label': 'Cuma'},
-    {'key': 'saturday', 'label': 'Cumartesi'},
-    {'key': 'sunday', 'label': 'Pazar'},
+    {'key': 'monday', 'label': 'Monday'},
+    {'key': 'tuesday', 'label': 'Tuesday'},
+    {'key': 'wednesday', 'label': 'Wednesday'},
+    {'key': 'thursday', 'label': 'Thursday'},
+    {'key': 'friday', 'label': 'Friday'},
+    {'key': 'saturday', 'label': 'Saturday'},
+    {'key': 'sunday', 'label': 'Sunday'},
   ];
 
   final List<Map<String, dynamic>> _shiftTypes = [
-    {'key': 'morning', 'label': 'Sabah Vardiyası', 'time': '06:00 - 14:00', 'icon': Icons.wb_sunny},
-    {'key': 'day', 'label': 'Gündüz Vardiyası', 'time': '09:00 - 17:00', 'icon': Icons.light_mode},
-    {'key': 'afternoon', 'label': 'Akşam Vardiyası', 'time': '14:00 - 22:00', 'icon': Icons.wb_twilight},
-    {'key': 'night', 'label': 'Gece Vardiyası', 'time': '22:00 - 06:00', 'icon': Icons.nightlight},
-    {'key': 'flexible', 'label': 'Esnek', 'time': 'Herhangi bir saat', 'icon': Icons.schedule},
+    {'key': 'morning', 'label': 'Morning shift', 'time': '06:00 - 14:00', 'icon': Icons.wb_sunny},
+    {'key': 'day', 'label': 'Day shift', 'time': '09:00 - 17:00', 'icon': Icons.light_mode},
+    {'key': 'afternoon', 'label': 'Evening shift', 'time': '14:00 - 22:00', 'icon': Icons.wb_twilight},
+    {'key': 'night', 'label': 'Night shift', 'time': '22:00 - 06:00', 'icon': Icons.nightlight},
+    {'key': 'flexible', 'label': 'Flexible', 'time': 'Any time', 'icon': Icons.schedule},
   ];
 
   final List<Map<String, dynamic>> _workModels = [
-    {'key': 'office', 'label': 'Tam Zamanlı Ofis', 'icon': Icons.business, 'description': 'Her gün ofisten çalışma'},
-    {'key': 'remote', 'label': 'Tam Zamanlı Uzaktan', 'icon': Icons.home, 'description': 'Her gün evden çalışma'},
-    {'key': 'hybrid', 'label': 'Hibrit', 'icon': Icons.compare_arrows, 'description': 'Hem ofis hem uzaktan'},
+    {'key': 'office', 'label': 'Full-time office', 'icon': Icons.business, 'description': 'Work from the office every day'},
+    {'key': 'remote', 'label': 'Full-time remote', 'icon': Icons.home, 'description': 'Work from home every day'},
+    {'key': 'hybrid', 'label': 'Hybrid', 'icon': Icons.compare_arrows, 'description': 'Split between office and home'},
   ];
 
   @override
@@ -86,7 +86,7 @@ class _PreferencesScreenState extends State<PreferencesScreen> {
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Tercihleriniz başarıyla kaydedildi!'),
+          content: Text('Your preferences were saved'),
           backgroundColor: Colors.green,
           behavior: SnackBarBehavior.floating,
         ),
@@ -99,7 +99,7 @@ class _PreferencesScreenState extends State<PreferencesScreen> {
     return Scaffold(
       backgroundColor: Colors.grey[100],
       appBar: AppBar(
-        title: const Text('Çalışma Tercihlerim'),
+        title: const Text('My work preferences'),
         backgroundColor: const Color(0xFF1E3A5F),
         foregroundColor: Colors.white,
         elevation: 0,
@@ -110,16 +110,16 @@ class _PreferencesScreenState extends State<PreferencesScreen> {
               showDialog(
                 context: context,
                 builder: (context) => AlertDialog(
-                  title: const Text('Tercihleriniz Hakkında'),
+                  title: const Text('About your preferences'),
                   content: const Text(
-                    'Burada belirlediğiniz tercihler, AI vardiya optimizasyonunda dikkate alınır. '
-                    'Yöneticiniz bu tercihleri görebilir ve vardiya planlamasında kullanabilir.\n\n'
-                    'Not: Tercihler kesin garanti değildir, iş yoğunluğuna göre değişiklik olabilir.',
+                    'The preferences you set here are used by the AI schedule optimizer. '
+                    'Your manager can see these preferences and use them when planning shifts.\n\n'
+                    'Note: preferences are not a guarantee and may change with business needs.',
                   ),
                   actions: [
                     TextButton(
                       onPressed: () => Navigator.pop(context),
-                      child: const Text('Anladım'),
+                      child: const Text('Got it'),
                     ),
                   ],
                 ),
@@ -171,7 +171,7 @@ class _PreferencesScreenState extends State<PreferencesScreen> {
                         ),
                         SizedBox(height: 4),
                         Text(
-                          'Tercihleriniz AI vardiya optimizasyonunda kullanılır',
+                          'Your preferences feed the AI schedule optimizer',
                           style: TextStyle(
                             color: Colors.white70,
                             fontSize: 12,
@@ -188,13 +188,13 @@ class _PreferencesScreenState extends State<PreferencesScreen> {
 
             // Haftalık İzin Günü
             _buildSectionCard(
-              title: 'Haftalık İzin Günü',
+              title: 'Weekly day off',
               icon: Icons.event_available,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const Text(
-                    'Hangi gün haftalık izninizi tercih edersiniz?',
+                    'Which day would you like off each week?',
                     style: TextStyle(color: Colors.grey, fontSize: 13),
                   ),
                   const SizedBox(height: 12),
@@ -228,7 +228,7 @@ class _PreferencesScreenState extends State<PreferencesScreen> {
 
             // Çalışma Modeli
             _buildSectionCard(
-              title: 'Çalışma Modeli',
+              title: 'Work model',
               icon: Icons.work_outline,
               child: Column(
                 children: _workModels.map((model) {
@@ -309,13 +309,13 @@ class _PreferencesScreenState extends State<PreferencesScreen> {
             if (_workModel == 'hybrid') ...[
               const SizedBox(height: 16),
               _buildSectionCard(
-                title: 'Hibrit Çalışma Detayları',
+                title: 'Hybrid work details',
                 icon: Icons.tune,
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     const Text(
-                      'Haftalık çalışma dağılımınızı belirleyin',
+                      'Set how your work week is split',
                       style: TextStyle(color: Colors.grey, fontSize: 13),
                     ),
                     const SizedBox(height: 16),
@@ -334,7 +334,7 @@ class _PreferencesScreenState extends State<PreferencesScreen> {
                                   children: [
                                     const Icon(Icons.business, color: Color(0xFF1E3A5F)),
                                     const SizedBox(height: 8),
-                                    const Text('Ofis Günü', style: TextStyle(fontSize: 12)),
+                                    const Text('Office days', style: TextStyle(fontSize: 12)),
                                     const SizedBox(height: 8),
                                     Row(
                                       mainAxisAlignment: MainAxisAlignment.center,
@@ -391,7 +391,7 @@ class _PreferencesScreenState extends State<PreferencesScreen> {
                                   children: [
                                     const Icon(Icons.home, color: Colors.green),
                                     const SizedBox(height: 8),
-                                    const Text('Uzaktan Gün', style: TextStyle(fontSize: 12)),
+                                    const Text('Remote days', style: TextStyle(fontSize: 12)),
                                     const SizedBox(height: 8),
                                     Row(
                                       mainAxisAlignment: MainAxisAlignment.center,
@@ -445,13 +445,13 @@ class _PreferencesScreenState extends State<PreferencesScreen> {
 
             // Tercih Edilen Vardiya
             _buildSectionCard(
-              title: 'Tercih Edilen Vardiya',
+              title: 'Preferred shift',
               icon: Icons.access_time,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const Text(
-                    'Hangi vardiya saatlerini tercih edersiniz?',
+                    'Which shift hours do you prefer?',
                     style: TextStyle(color: Colors.grey, fontSize: 13),
                   ),
                   const SizedBox(height: 12),
@@ -520,13 +520,13 @@ class _PreferencesScreenState extends State<PreferencesScreen> {
 
             // Ek Notlar
             _buildSectionCard(
-              title: 'Ek Notlar',
+              title: 'Additional notes',
               icon: Icons.note_alt_outlined,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const Text(
-                    'Yöneticinize iletmek istediğiniz ek notlar',
+                    'Additional notes for your manager',
                     style: TextStyle(color: Colors.grey, fontSize: 13),
                   ),
                   const SizedBox(height: 12),
@@ -534,7 +534,7 @@ class _PreferencesScreenState extends State<PreferencesScreen> {
                     controller: _notesController,
                     maxLines: 3,
                     decoration: InputDecoration(
-                      hintText: 'Örn: Cuma günleri erken çıkmak istiyorum, çocuğumu okuldan almam gerekiyor...',
+                      hintText: 'e.g. I would like to finish early on Fridays to pick up my child from school...',
                       hintStyle: TextStyle(color: Colors.grey[400], fontSize: 13),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
@@ -580,7 +580,7 @@ class _PreferencesScreenState extends State<PreferencesScreen> {
                           Icon(Icons.save, color: Colors.white),
                           SizedBox(width: 8),
                           Text(
-                            'Tercihlerimi Kaydet',
+                            'Save my preferences',
                             style: TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.bold,
@@ -609,7 +609,7 @@ class _PreferencesScreenState extends State<PreferencesScreen> {
                   const SizedBox(width: 12),
                   Expanded(
                     child: Text(
-                      'Tercihleriniz AI tarafından değerlendirilir ancak iş gereksinimleri nedeniyle her zaman tam olarak karşılanamayabilir.',
+                      'The optimizer takes your preferences into account, but business needs may not always allow an exact match.',
                       style: TextStyle(
                         fontSize: 12,
                         color: Colors.grey[700],

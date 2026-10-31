@@ -146,10 +146,10 @@ class _LoginScreenState extends State<LoginScreen> {
       ),
       validator: (value) {
         if (value == null || value.isEmpty) {
-          return 'E-posta gerekli';
+          return 'Email is required';
         }
         if (!value.contains('@')) {
-          return 'Geçerli bir e-posta girin';
+          return 'Enter a valid email';
         }
         return null;
       },
@@ -180,10 +180,10 @@ class _LoginScreenState extends State<LoginScreen> {
       ),
       validator: (value) {
         if (value == null || value.isEmpty) {
-          return 'Şifre gerekli';
+          return 'Password is required';
         }
         if (value.length < 4) {
-          return 'Şifre en az 4 karakter olmalı';
+          return 'Password must be at least 4 characters';
         }
         return null;
       },
@@ -216,7 +216,7 @@ class _LoginScreenState extends State<LoginScreen> {
         // Şifremi unuttum sayfasına git
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Şifre sıfırlama için yöneticinize başvurun'),
+            content: Text('Ask your manager to reset your password'),
           ),
         );
       },

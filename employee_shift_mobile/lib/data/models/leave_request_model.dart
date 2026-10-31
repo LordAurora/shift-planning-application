@@ -17,11 +17,11 @@ enum LeaveStatus {
   String get displayName {
     switch (this) {
       case LeaveStatus.pending:
-        return 'Beklemede';
+        return 'Pending';
       case LeaveStatus.approved:
-        return 'Onaylandı';
+        return 'Approved';
       case LeaveStatus.rejected:
-        return 'Reddedildi';
+        return 'Rejected';
     }
   }
 }
@@ -47,15 +47,15 @@ enum LeaveType {
   String get displayName {
     switch (this) {
       case LeaveType.annual:
-        return 'Yıllık İzin';
+        return 'Annual leave';
       case LeaveType.sick:
-        return 'Hastalık İzni';
+        return 'Sick leave';
       case LeaveType.personal:
-        return 'Kişisel İzin';
+        return 'Personal leave';
       case LeaveType.maternity:
-        return 'Doğum İzni';
+        return 'Maternity leave';
       case LeaveType.unpaid:
-        return 'Ücretsiz İzin';
+        return 'Unpaid leave';
     }
   }
 }

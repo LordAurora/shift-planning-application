@@ -61,24 +61,24 @@ class _LeaveRequestsScreenState extends State<LeaveRequestsScreen>
           unselectedLabelColor: AppColors.textSecondary,
           indicatorColor: AppColors.primary,
           tabs: const [
-            Tab(text: 'Bekleyen'),
-            Tab(text: 'Onaylanan'),
-            Tab(text: 'Reddedilen'),
+            Tab(text: 'Pending'),
+            Tab(text: 'Approved'),
+            Tab(text: 'Rejected'),
           ],
         ),
       ),
       body: Consumer<LeaveRequestProvider>(
         builder: (context, leaveProvider, _) {
           if (leaveProvider.isLoading) {
-            return const LoadingWidget(message: 'İzin talepleri yükleniyor...');
+            return const LoadingWidget(message: 'Loading leave requests...');
           }
 
           return TabBarView(
             controller: _tabController,
             children: [
-              _buildRequestList(leaveProvider.pendingRequests, 'Bekleyen talep yok'),
-              _buildRequestList(leaveProvider.approvedRequests, 'Onaylanan talep yok'),
-              _buildRequestList(leaveProvider.rejectedRequests, 'Reddedilen talep yok'),
+              _buildRequestList(leaveProvider.pendingRequests, 'No pending requests'),
+              _buildRequestList(leaveProvider.approvedRequests, 'No approved requests'),
+              _buildRequestList(leaveProvider.rejectedRequests, 'No rejected requests'),
             ],
           );
         },
@@ -86,7 +86,7 @@ class _LeaveRequestsScreenState extends State<LeaveRequestsScreen>
       floatingActionButton: FloatingActionButton.extended(
         onPressed: _showCreateRequestDialog,
         icon: const Icon(Icons.add),
-        label: const Text('Yeni Talep'),
+        label: const Text('New request'),
       ),
     );
   }
@@ -122,8 +122,8 @@ class _LeaveRequestsScreenState extends State<LeaveRequestsScreen>
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Talebi İptal Et'),
-        content: const Text('Bu izin talebini iptal etmek istediğinizden emin misiniz?'),
+        title: const Text('Cancel request'),
+        content: const Text('Cancel this leave request?'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
@@ -137,7 +137,7 @@ class _LeaveRequestsScreenState extends State<LeaveRequestsScreen>
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.error,
             ),
-            child: const Text('İptal Et'),
+            child: const Text('Cancel'),
           ),
         ],
       ),
@@ -217,7 +217,7 @@ class _CreateLeaveRequestSheetState extends State<_CreateLeaveRequestSheet> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            success ? AppStrings.leaveRequestCreated : 'Talep oluşturulamadı',
+            success ? AppStrings.leaveRequestCreated : 'Could not create the request',
           ),
           backgroundColor: success ? AppColors.success : AppColors.error,
         ),
@@ -334,7 +334,7 @@ class _CreateLeaveRequestSheetState extends State<_CreateLeaveRequestSheet> {
                     ),
                     const SizedBox(width: 8),
                     Text(
-                      'Toplam ${_endDate.difference(_startDate).inDays + 1} gün',
+                      '${_endDate.difference(_startDate).inDays + 1} days in total',
                       style: const TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.w600,
@@ -360,7 +360,7 @@ class _CreateLeaveRequestSheetState extends State<_CreateLeaveRequestSheet> {
                 controller: _reasonController,
                 maxLines: 3,
                 decoration: const InputDecoration(
-                  hintText: 'İzin talebinizin nedenini yazın...',
+                  hintText: 'Describe the reason for your leave...',
                   prefixIcon: Icon(Icons.notes_outlined),
                 ),
               ),
@@ -380,7 +380,7 @@ class _CreateLeaveRequestSheetState extends State<_CreateLeaveRequestSheet> {
                               valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
                             ),
                           )
-                        : const Text('Talep Oluştur'),
+                        : const Text('Submit request'),
                   );
                 },
               ),
@@ -429,7 +429,7 @@ class _CreateLeaveRequestSheetState extends State<_CreateLeaveRequestSheet> {
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
-                    DateFormat('d MMM yyyy', 'tr_TR').format(date),
+                    DateFormat('d MMM yyyy', 'en_US').format(date),
                     style: const TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w500,

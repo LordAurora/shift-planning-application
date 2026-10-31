@@ -96,13 +96,13 @@ class AppNotification {
     if (difference.inDays > 7) {
       return '${createdAt.day}.${createdAt.month}.${createdAt.year}';
     } else if (difference.inDays > 0) {
-      return '${difference.inDays} gün önce';
+      return '${difference.inDays}d ago';
     } else if (difference.inHours > 0) {
-      return '${difference.inHours} saat önce';
+      return '${difference.inHours}h ago';
     } else if (difference.inMinutes > 0) {
-      return '${difference.inMinutes} dakika önce';
+      return '${difference.inMinutes}m ago';
     } else {
-      return 'Şimdi';
+      return 'Just now';
     }
   }
 

@@ -50,7 +50,7 @@ class ShiftCard extends StatelessWidget {
                             ),
                           ),
                         Text(
-                          shift.departmentName ?? 'Departman',
+                          shift.departmentName ?? 'Department',
                           style: TextStyle(
                             fontSize: isCompact ? 15 : 16,
                             fontWeight: FontWeight.w600,
@@ -74,13 +74,13 @@ class ShiftCard extends StatelessWidget {
                 children: [
                   _buildTimeInfo(
                     icon: Icons.play_arrow_rounded,
-                    label: 'Başlangıç',
+                    label: 'Start',
                     time: shift.startTime,
                   ),
                   const SizedBox(width: 24),
                   _buildTimeInfo(
                     icon: Icons.stop_rounded,
-                    label: 'Bitiş',
+                    label: 'End',
                     time: shift.endTime,
                   ),
                   const Spacer(),
@@ -209,11 +209,11 @@ class ShiftCard extends StatelessWidget {
     final dateOnly = DateTime(date.year, date.month, date.day);
 
     if (dateOnly == today) {
-      return 'Bugün';
+      return 'Today';
     } else if (dateOnly == tomorrow) {
-      return 'Yarın';
+      return 'Tomorrow';
     } else {
-      return DateFormat('d MMMM EEEE', 'tr_TR').format(date);
+      return DateFormat('d MMMM EEEE', 'en_US').format(date);
     }
   }
 }
