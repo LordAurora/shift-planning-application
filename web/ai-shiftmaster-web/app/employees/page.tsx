@@ -43,16 +43,38 @@ const { Title, Text } = Typography;
 const { Option } = Select;
 
 const DAYS_OF_WEEK = [
-  { value: 0, label: 'Pazar' },
-  { value: 1, label: 'Pazartesi' },
-  { value: 2, label: 'Sali' },
-  { value: 3, label: 'Carsamba' },
-  { value: 4, label: 'Persembe' },
-  { value: 5, label: 'Cuma' },
-  { value: 6, label: 'Cumartesi' },
+  { value: 0, label: 'Sunday' },
+  { value: 1, label: 'Monday' },
+  { value: 2, label: 'Tuesday' },
+  { value: 3, label: 'Wednesday' },
+  { value: 4, label: 'Thursday' },
+  { value: 5, label: 'Friday' },
+  { value: 6, label: 'Saturday' },
 ];
 
-const ROLES = ['Gelistirici', 'Yonetici', 'Analist', 'Tasarimci', 'Destek', 'Muhendis', 'Operasyon'];
+const ROLES = [
+  'Software Engineer',
+  'QA Engineer',
+  'DevOps Engineer',
+  'Developer',
+  'Operations Specialist',
+  'Logistics Coordinator',
+  'Support Specialist',
+  'Support Team Lead',
+  'Support',
+  'HR Specialist',
+  'Recruiter',
+  'Accountant',
+  'Financial Analyst',
+  'Manager',
+];
+
+const SHIFT_LABELS: Record<string, { label: string; color: string }> = {
+  morning: { label: 'Morning', color: 'gold' },
+  day: { label: 'Day', color: 'green' },
+  afternoon: { label: 'Evening', color: 'blue' },
+  night: { label: 'Night', color: 'purple' },
+};
 
 export default function EmployeesPage() {
   const [employees, setEmployees] = useState<Employee[]>([]);
@@ -92,14 +114,14 @@ export default function EmployeesPage() {
     
     setGeneratedPassword(password);
     form.setFieldValue('password', password);
-    message.success('Rastgele sifre olusturuldu!');
+    message.success('Random password generated');
   };
 
   const copyPassword = () => {
     const password = form.getFieldValue('password');
     if (password) {
       navigator.clipboard.writeText(password);
-      message.success('Sifre panoya kopyalandi!');
+      message.success('Password copied to clipboard');
     }
   };
 
@@ -115,7 +137,7 @@ export default function EmployeesPage() {
       setEmployees(response.items);
       setPagination(prev => ({ ...prev, total: response.total }));
     } catch (error) {
-      message.error('Calisanlar yuklenirken hata olustu');
+      message.error('Failed to load employees');
     } finally {
       setLoading(false);
     }
@@ -126,7 +148,7 @@ export default function EmployeesPage() {
       const response = await departmentService.getAll();
       setDepartments(response);
     } catch (error) {
-      message.error('Departmanlar yuklenirken hata olustu');
+      message.error('Failed to load departments');
     }
   };
 
@@ -170,16 +192,16 @@ export default function EmployeesPage() {
   const handleDelete = async (id: number) => {
     try {
       await employeeService.delete(id);
-      message.success('Calisan basariyla silindi');
+      message.success('Employee deleted');
       fetchEmployees();
     } catch (error) {
-      message.error('Calisan silinirken hata olustu');
+      message.error('Failed to delete employee');
     }
   };
 
   const handleSubmit = async (values: Record<string, unknown>) => {
     try {
-      const availability: AvailabilitySlot[] = (values.availability_days as number[]).map(day => ({
+      const availability: AvailabilitySlot[] = ((values.availability_days as number[] | undefined) ?? []).map(day => ({
         day,
         start_time: (values.availability_start as dayjs.Dayjs).format('HH:mm'),
         end_time: (values.availability_end as dayjs.Dayjs).format('HH:mm'),
@@ -201,73 +223,82 @@ export default function EmployeesPage() {
           employeeData.password = values.password;
         }
         await employeeService.update(editingEmployee.id, employeeData);
-        message.success('Calisan basariyla guncellendi');
+        message.success('Employee updated');
       } else {
         // Password is required for new employees
         employeeData.password = values.password;
         await employeeService.create(employeeData);
-        message.success('Calisan basariyla olusturuldu');
+        message.success('Employee created');
       }
       setModalVisible(false);
       form.resetFields();
       fetchEmployees();
     } catch (error: any) {
-      message.error(error?.response?.data?.detail || 'Calisan kaydedilirken hata olustu');
+      message.error(error?.response?.data?.detail || 'Failed to save employee');
     }
   };
 
   const columns: ColumnsType<Employee> = [
     {
-      title: 'Ad Soyad',
+      title: 'Name',
       dataIndex: 'name',
       key: 'name',
       sorter: (a, b) => a.name.localeCompare(b.name),
     },
     {
-      title: 'E-posta',
+      title: 'Email',
       dataIndex: 'email',
       key: 'email',
     },
     {
-      title: 'Pozisyon',
+      title: 'Role',
       dataIndex: 'role',
       key: 'role',
       render: (role: string) => <Tag color="blue">{role}</Tag>,
     },
     {
-      title: 'Departman',
+      title: 'Department',
       dataIndex: 'department_name',
       key: 'department_name',
     },
     {
-      title: 'Haftalik Limit',
+      title: 'Weekly limit',
       dataIndex: 'weekly_working_limit',
       key: 'weekly_working_limit',
-      render: (hours: number) => `${hours}s`,
+      render: (hours: number) => `${hours} h`,
     },
     {
-      title: 'Fazla Mesai Limit',
+      title: 'Overtime limit',
       dataIndex: 'overtime_limit',
       key: 'overtime_limit',
-      render: (hours: number) => `${hours}s`,
+      render: (hours: number) => `${hours} h`,
     },
     {
-      title: 'Musait Gunler',
-      dataIndex: 'availability',
-      key: 'availability',
-      render: (availability: AvailabilitySlot[]) => (
-        <span>
-          {availability?.map(a => DAYS_OF_WEEK.find(d => d.value === a.day)?.label.slice(0, 3)).join(', ') || '-'}
-        </span>
-      ),
+      title: 'Preferences',
+      key: 'preferences',
+      render: (_: unknown, record: Employee) => {
+        const pref = record.preferences;
+        const shift = pref?.preferred_shift ? SHIFT_LABELS[pref.preferred_shift] : null;
+        const off = pref?.weekly_off_day != null ? DAYS_OF_WEEK.find((d) => d.value === pref.weekly_off_day)?.label : null;
+        if (!shift && !off) {
+          const days = record.availability?.map((a) => DAYS_OF_WEEK.find((d) => d.value === a.day)?.label.slice(0, 3)).join(', ');
+          return <Text type="secondary">{days || 'Any day'}</Text>;
+        }
+        return (
+          <Space size={4} wrap>
+            {shift && <Tag color={shift.color}>{shift.label}</Tag>}
+            {off && <Tag>Off: {off.slice(0, 3)}</Tag>}
+          </Space>
+        );
+      },
     },
     {
-      title: 'Islemler',
+      title: 'Actions',
       key: 'actions',
       width: 120,
       render: (_, record) => (
         <Space size="small">
-          <Tooltip title="Duzenle">
+          <Tooltip title="Edit">
             <Button
               type="text"
               icon={<EditOutlined />}
@@ -275,11 +306,11 @@ export default function EmployeesPage() {
             />
           </Tooltip>
           <Popconfirm
-            title="Calisani Sil"
-            description="Bu calisani silmek istediginizden emin misiniz? Kullanici hesabi da silinecektir."
+            title="Delete employee"
+            description="Delete this employee? Their user account will be removed too."
             onConfirm={() => handleDelete(record.id)}
-            okText="Evet"
-            cancelText="Hayir"
+            okText="Delete"
+            cancelText="Cancel"
           >
             <Button type="text" danger icon={<DeleteOutlined />} />
           </Popconfirm>
@@ -293,10 +324,10 @@ export default function EmployeesPage() {
       <div>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
           <Title level={4} style={{ margin: 0 }}>
-            Calisan Yonetimi
+            Employees
           </Title>
           <Button type="primary" icon={<PlusOutlined />} onClick={handleCreate}>
-            Calisan Ekle
+            Add employee
           </Button>
         </div>
 
@@ -304,7 +335,7 @@ export default function EmployeesPage() {
           <Row gutter={16}>
             <Col xs={24} sm={12} md={8}>
               <Input
-                placeholder="Ad veya e-posta ile ara..."
+                placeholder="Search by name or email..."
                 prefix={<SearchOutlined />}
                 value={searchText}
                 onChange={(e) => setSearchText(e.target.value)}
@@ -313,7 +344,7 @@ export default function EmployeesPage() {
             </Col>
             <Col xs={24} sm={12} md={8}>
               <Select
-                placeholder="Departmana gore filtrele"
+                placeholder="Filter by department"
                 style={{ width: '100%' }}
                 value={selectedDepartment}
                 onChange={setSelectedDepartment}
@@ -328,7 +359,7 @@ export default function EmployeesPage() {
             </Col>
             <Col xs={24} sm={12} md={8}>
               <Button icon={<ReloadOutlined />} onClick={fetchEmployees}>
-                Yenile
+                Refresh
               </Button>
             </Col>
           </Row>
@@ -345,7 +376,7 @@ export default function EmployeesPage() {
                 pageSize: pagination.pageSize,
                 total: pagination.total,
                 showSizeChanger: true,
-                showTotal: (total) => `Toplam ${total} calisan`,
+                showTotal: (total) => `${total} employees`,
                 onChange: (page, pageSize) => setPagination(prev => ({ ...prev, current: page, pageSize })),
               }}
             />
@@ -353,7 +384,7 @@ export default function EmployeesPage() {
         </Card>
 
         <Modal
-          title={editingEmployee ? 'Calisani Duzenle' : 'Yeni Calisan Ekle'}
+          title={editingEmployee ? 'Edit employee' : 'Add employee'}
           open={modalVisible}
           onCancel={() => {
             setModalVisible(false);
@@ -372,8 +403,8 @@ export default function EmployeesPage() {
               <Col span={12}>
                 <Form.Item
                   name="name"
-                  label="Ad Soyad"
-                  rules={[{ required: true, message: 'Lutfen ad soyad girin' }]}
+                  label="Full name"
+                  rules={[{ required: true, message: 'Please enter a name' }]}
                 >
                   <Input placeholder="Ornek: Ahmet Yilmaz" />
                 </Form.Item>
@@ -381,10 +412,10 @@ export default function EmployeesPage() {
               <Col span={12}>
                 <Form.Item
                   name="email"
-                  label="E-posta (Giris icin kullanilacak)"
+                  label="Email (used to sign in)"
                   rules={[
-                    { required: true, message: 'Lutfen e-posta girin' },
-                    { type: 'email', message: 'Gecerli bir e-posta girin' },
+                    { required: true, message: 'Please enter an email' },
+                    { type: 'email', message: 'Enter a valid email address' },
                   ]}
                 >
                   <Input placeholder="ornek@sirket.com" />
@@ -397,27 +428,27 @@ export default function EmployeesPage() {
               name="password"
               label={
                 <Space>
-                  <span>{editingEmployee ? 'Yeni Sifre (Degistirmek icin doldurun)' : 'Sifre (Mobil giris icin)'}</span>
-                  <Tooltip title="Calisan bu sifre ile mobil uygulamadan giris yapacak">
+                  <span>{editingEmployee ? 'New password (leave empty to keep)' : 'Password (for the mobile app)'}</span>
+                  <Tooltip title="The employee uses this password to sign in to the mobile app">
                     <KeyOutlined style={{ color: '#1e3a5f' }} />
                   </Tooltip>
                 </Space>
               }
               rules={editingEmployee ? [] : [
-                { required: true, message: 'Lutfen sifre girin' },
-                { min: 6, message: 'Sifre en az 6 karakter olmali' },
+                { required: true, message: 'Please enter a password' },
+                { min: 6, message: 'Password must be at least 6 characters' },
               ]}
             >
               <Input.Group compact style={{ display: 'flex' }}>
                 <Input
                   style={{ flex: 1 }}
                   type={showPassword ? 'text' : 'password'}
-                  placeholder={editingEmployee ? 'Yeni sifre (opsiyonel)' : 'Sifre girin veya olusturun'}
+                  placeholder={editingEmployee ? 'New password (optional)' : 'Enter or generate a password'}
                   value={form.getFieldValue('password')}
                   onChange={(e) => form.setFieldValue('password', e.target.value)}
                   suffix={
                     <Space>
-                      <Tooltip title={showPassword ? 'Sifreyi gizle' : 'Sifreyi goster'}>
+                      <Tooltip title={showPassword ? 'Hide password' : 'Show password'}>
                         <Button
                           type="text"
                           size="small"
@@ -425,7 +456,7 @@ export default function EmployeesPage() {
                           onClick={() => setShowPassword(!showPassword)}
                         />
                       </Tooltip>
-                      <Tooltip title="Sifreyi kopyala">
+                      <Tooltip title="Copy password">
                         <Button
                           type="text"
                           size="small"
@@ -436,24 +467,24 @@ export default function EmployeesPage() {
                     </Space>
                   }
                 />
-                <Tooltip title="Rastgele guclu sifre olustur">
+                <Tooltip title="Generate a strong random password">
                   <Button
                     type="primary"
                     icon={<KeyOutlined />}
                     onClick={generatePassword}
                     style={{ backgroundColor: '#22c55e', borderColor: '#22c55e' }}
                   >
-                    Olustur
+                    Generate
                   </Button>
                 </Tooltip>
               </Input.Group>
             </Form.Item>
             {generatedPassword && (
               <div style={{ marginBottom: 16, padding: 12, backgroundColor: '#f0fdf4', borderRadius: 8, border: '1px solid #22c55e' }}>
-                <Text type="secondary">Olusturulan sifre: </Text>
+                <Text type="secondary">Generated password: </Text>
                 <Text strong copyable style={{ color: '#22c55e' }}>{generatedPassword}</Text>
                 <br />
-                <Text type="secondary" style={{ fontSize: 12 }}>Bu sifreyi calisana iletin. Mobil uygulamadan giris icin kullanacak.</Text>
+                <Text type="secondary" style={{ fontSize: 12 }}>Share this password with the employee for mobile sign-in.</Text>
               </div>
             )}
 
@@ -461,10 +492,10 @@ export default function EmployeesPage() {
               <Col span={12}>
                 <Form.Item
                   name="role"
-                  label="Pozisyon"
-                  rules={[{ required: true, message: 'Lutfen pozisyon secin' }]}
+                  label="Role"
+                  rules={[{ required: true, message: 'Please select a role' }]}
                 >
-                  <Select placeholder="Pozisyon secin">
+                  <Select placeholder="Select a role">
                     {ROLES.map((role) => (
                       <Option key={role} value={role}>
                         {role}
@@ -476,10 +507,10 @@ export default function EmployeesPage() {
               <Col span={12}>
                 <Form.Item
                   name="department_id"
-                  label="Departman"
-                  rules={[{ required: true, message: 'Lutfen departman secin' }]}
+                  label="Department"
+                  rules={[{ required: true, message: 'Please select a department' }]}
                 >
-                  <Select placeholder="Departman secin">
+                  <Select placeholder="Select a department">
                     {departments.map((dept) => (
                       <Option key={dept.id} value={dept.id}>
                         {dept.name}
@@ -494,8 +525,8 @@ export default function EmployeesPage() {
               <Col span={12}>
                 <Form.Item
                   name="weekly_working_limit"
-                  label="Haftalik Calisma Limiti (saat)"
-                  rules={[{ required: true, message: 'Lutfen haftalik limit girin' }]}
+                  label="Weekly working limit (hours)"
+                  rules={[{ required: true, message: 'Please enter a weekly limit' }]}
                 >
                   <InputNumber min={0} max={168} style={{ width: '100%' }} />
                 </Form.Item>
@@ -503,8 +534,8 @@ export default function EmployeesPage() {
               <Col span={12}>
                 <Form.Item
                   name="overtime_limit"
-                  label="Fazla Mesai Limiti (saat)"
-                  rules={[{ required: true, message: 'Lutfen fazla mesai limiti girin' }]}
+                  label="Overtime limit (hours)"
+                  rules={[{ required: true, message: 'Please enter an overtime limit' }]}
                 >
                   <InputNumber min={0} max={40} style={{ width: '100%' }} />
                 </Form.Item>
@@ -513,8 +544,8 @@ export default function EmployeesPage() {
 
             <Form.Item
               name="availability_days"
-              label="Musait Gunler"
-              rules={[{ required: true, message: 'Lutfen musait gunleri secin' }]}
+              label="Available days"
+              tooltip="Leave empty if the employee can work any day"
             >
               <Checkbox.Group>
                 <Row>
@@ -531,8 +562,8 @@ export default function EmployeesPage() {
               <Col span={12}>
                 <Form.Item
                   name="availability_start"
-                  label="Musaitlik Baslangic Saati"
-                  rules={[{ required: true, message: 'Lutfen baslangic saati secin' }]}
+                  label="Available from"
+                  rules={[{ required: true, message: 'Please select a start time' }]}
                 >
                   <TimePicker format="HH:mm" style={{ width: '100%' }} />
                 </Form.Item>
@@ -540,8 +571,8 @@ export default function EmployeesPage() {
               <Col span={12}>
                 <Form.Item
                   name="availability_end"
-                  label="Musaitlik Bitis Saati"
-                  rules={[{ required: true, message: 'Lutfen bitis saati secin' }]}
+                  label="Available until"
+                  rules={[{ required: true, message: 'Please select an end time' }]}
                 >
                   <TimePicker format="HH:mm" style={{ width: '100%' }} />
                 </Form.Item>
@@ -550,9 +581,9 @@ export default function EmployeesPage() {
 
             <Form.Item style={{ marginBottom: 0, marginTop: 24 }}>
               <Space style={{ float: 'right' }}>
-                <Button onClick={() => setModalVisible(false)}>Iptal</Button>
+                <Button onClick={() => setModalVisible(false)}>Cancel</Button>
                 <Button type="primary" htmlType="submit">
-                  {editingEmployee ? 'Guncelle' : 'Olustur'}
+                  {editingEmployee ? 'Update' : 'Create'}
                 </Button>
               </Space>
             </Form.Item>

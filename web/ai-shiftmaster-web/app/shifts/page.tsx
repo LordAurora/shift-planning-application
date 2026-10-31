@@ -91,8 +91,8 @@ export default function ShiftsPage() {
         } catch { setConflicts([]); }
       }
     } catch (error) {
-      console.error('Veri yuklenirken hata:', error);
-      message.error('Veriler yuklenirken hata olustu');
+      console.error('Failed to load data:', error);
+      message.error('Failed to load shifts');
     } finally {
       setLoading(false);
     }
@@ -115,8 +115,8 @@ export default function ShiftsPage() {
   };
 
   const handleDelete = async (id: number) => {
-    try { await shiftService.delete(id); message.success('Vardiya silindi'); fetchData(); }
-    catch { message.error('Vardiya silinemedi'); }
+    try { await shiftService.delete(id); message.success('Shift deleted'); fetchData(); }
+    catch { message.error('Failed to delete shift'); }
   };
 
   const handleSubmit = async (values: any) => {
@@ -128,10 +128,10 @@ export default function ShiftsPage() {
         end_time: values.date.hour(values.time_range[1].hour()).minute(values.time_range[1].minute()).toISOString(),
         status: values.status || 'scheduled',
       };
-      if (editingShift) { await shiftService.update(editingShift.id, shiftData); message.success('Vardiya guncellendi'); }
-      else { await shiftService.create(shiftData); message.success('Vardiya olusturuldu'); }
+      if (editingShift) { await shiftService.update(editingShift.id, shiftData); message.success('Shift updated'); }
+      else { await shiftService.create(shiftData); message.success('Shift created'); }
       setIsModalOpen(false); form.resetFields(); fetchData();
-    } catch (error: any) { message.error(error?.response?.data?.detail || 'Islem basarisiz'); }
+    } catch (error: any) { message.error(error?.response?.data?.detail || 'Operation failed'); }
   };
 
   const getStatusColor = (status: string) => {
@@ -145,27 +145,27 @@ export default function ShiftsPage() {
 
   const getStatusText = (status: string) => {
     switch (status) {
-      case 'completed': return 'Tamamlandi';
-      case 'cancelled': return 'Iptal Edildi';
-      case 'in_progress': return 'Devam Ediyor';
-      case 'scheduled': return 'Planli';
+      case 'completed': return 'Completed';
+      case 'cancelled': return 'Cancelled';
+      case 'in_progress': return 'In progress';
+      case 'scheduled': return 'Scheduled';
       default: return status;
     }
   };
 
   const columns: ColumnsType<Shift> = [
     { title: 'ID', dataIndex: 'id', key: 'id', width: 60 },
-    { title: 'Calisan', dataIndex: 'employee_name', key: 'employee_name', render: (name: string) => <Text strong>{name}</Text> },
-    { title: 'Departman', dataIndex: 'department_name', key: 'department_name', render: (name: string) => <Tag color="blue">{name}</Tag> },
-    { title: 'Tarih', dataIndex: 'start_time', key: 'date', render: (start_time: string) => dayjs(start_time).format('YYYY-MM-DD (ddd)'), sorter: (a, b) => dayjs(a.start_time).unix() - dayjs(b.start_time).unix() },
-    { title: 'Saat', key: 'time', render: (_, record) => <Text>{dayjs(record.start_time).format('HH:mm')} - {dayjs(record.end_time).format('HH:mm')}</Text> },
-    { title: 'Sure', key: 'duration', render: (_, record) => { const hours = dayjs(record.end_time).diff(dayjs(record.start_time), 'hour', true); return <Tag>{hours.toFixed(1)} saat</Tag>; } },
-    { title: 'Durum', dataIndex: 'status', key: 'status', render: (status: string) => <Tag color={getStatusColor(status)}>{getStatusText(status)}</Tag>, filters: [{ text: 'Planli', value: 'scheduled' }, { text: 'Devam Ediyor', value: 'in_progress' }, { text: 'Tamamlandi', value: 'completed' }, { text: 'Iptal Edildi', value: 'cancelled' }], onFilter: (value, record) => record.status === value },
-    { title: 'Islemler', key: 'actions', width: 120, render: (_, record) => (
+    { title: 'Employee', dataIndex: 'employee_name', key: 'employee_name', render: (name: string) => <Text strong>{name}</Text> },
+    { title: 'Department', dataIndex: 'department_name', key: 'department_name', render: (name: string) => <Tag color="blue">{name}</Tag> },
+    { title: 'Date', dataIndex: 'start_time', key: 'date', render: (start_time: string) => dayjs(start_time).format('YYYY-MM-DD (ddd)'), sorter: (a, b) => dayjs(a.start_time).unix() - dayjs(b.start_time).unix() },
+    { title: 'Time', key: 'time', render: (_, record) => <Text>{dayjs(record.start_time).format('HH:mm')} - {dayjs(record.end_time).format('HH:mm')}</Text> },
+    { title: 'Duration', key: 'duration', render: (_, record) => { const hours = dayjs(record.end_time).diff(dayjs(record.start_time), 'hour', true); return <Tag>{hours.toFixed(1)} h</Tag>; } },
+    { title: 'Status', dataIndex: 'status', key: 'status', render: (status: string) => <Tag color={getStatusColor(status)}>{getStatusText(status)}</Tag>, filters: [{ text: 'Scheduled', value: 'scheduled' }, { text: 'In progress', value: 'in_progress' }, { text: 'Completed', value: 'completed' }, { text: 'Cancelled', value: 'cancelled' }], onFilter: (value, record) => record.status === value },
+    { title: 'Actions', key: 'actions', width: 120, render: (_, record) => (
       <Space>
-        <Tooltip title="Duzenle"><Button type="text" icon={<EditOutlined />} onClick={() => handleEdit(record)} /></Tooltip>
-        <Popconfirm title="Vardiyayi silmek istediginize emin misiniz?" onConfirm={() => handleDelete(record.id)} okText="Evet" cancelText="Hayir">
-          <Tooltip title="Sil"><Button type="text" danger icon={<DeleteOutlined />} /></Tooltip>
+        <Tooltip title="Edit"><Button type="text" icon={<EditOutlined />} onClick={() => handleEdit(record)} /></Tooltip>
+        <Popconfirm title="Delete this shift?" onConfirm={() => handleDelete(record.id)} okText="Delete" cancelText="Cancel">
+          <Tooltip title="Delete"><Button type="text" danger icon={<DeleteOutlined />} /></Tooltip>
         </Popconfirm>
       </Space>
     ) },
@@ -183,7 +183,7 @@ export default function ShiftsPage() {
             </Tooltip>
           </li>
         ))}
-        {dayShifts.length > 3 && <li><Text type="secondary" style={{ fontSize: 10 }}>+{dayShifts.length - 3} daha</Text></li>}
+        {dayShifts.length > 3 && <li><Text type="secondary" style={{ fontSize: 10 }}>+{dayShifts.length - 3} more</Text></li>}
       </ul>
     );
   };
@@ -197,25 +197,25 @@ export default function ShiftsPage() {
       <Spin spinning={loading}>
         <div>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
-            <Title level={4} style={{ margin: 0 }}>Vardiya Yonetimi</Title>
+            <Title level={4} style={{ margin: 0 }}>Shift Management</Title>
             <Space>
-              <Button icon={<ReloadOutlined />} onClick={fetchData}>Yenile</Button>
-              <Button type="primary" icon={<PlusOutlined />} onClick={handleCreate}>Yeni Vardiya</Button>
+              <Button icon={<ReloadOutlined />} onClick={fetchData}>Refresh</Button>
+              <Button type="primary" icon={<PlusOutlined />} onClick={handleCreate}>New shift</Button>
             </Space>
           </div>
 
           <Row gutter={16} style={{ marginBottom: 24 }}>
-            <Col xs={24} sm={6}><Card size="small"><Statistic title="Toplam Vardiya" value={pagination.total} prefix={<CalendarOutlined />} /></Card></Col>
-            <Col xs={24} sm={6}><Card size="small"><Statistic title="Bugunun Vardiyelari" value={todayShifts.length} prefix={<TeamOutlined />} valueStyle={{ color: '#1890ff' }} /></Card></Col>
-            <Col xs={24} sm={6}><Card size="small"><Statistic title="Planli" value={scheduledShifts.length} prefix={<ClockCircleOutlined />} valueStyle={{ color: '#faad14' }} /></Card></Col>
-            <Col xs={24} sm={6}><Card size="small"><Statistic title="Toplam Saat" value={totalHours.toFixed(1)} suffix="saat" valueStyle={{ color: '#52c41a' }} /></Card></Col>
+            <Col xs={24} sm={6}><Card size="small"><Statistic title="Total shifts" value={pagination.total} prefix={<CalendarOutlined />} /></Card></Col>
+            <Col xs={24} sm={6}><Card size="small"><Statistic title="Today's shifts" value={todayShifts.length} prefix={<TeamOutlined />} valueStyle={{ color: '#1890ff' }} /></Card></Col>
+            <Col xs={24} sm={6}><Card size="small"><Statistic title="Scheduled" value={scheduledShifts.length} prefix={<ClockCircleOutlined />} valueStyle={{ color: '#faad14' }} /></Card></Col>
+            <Col xs={24} sm={6}><Card size="small"><Statistic title="Total hours" value={totalHours.toFixed(1)} suffix="h" valueStyle={{ color: '#52c41a' }} /></Card></Col>
           </Row>
 
           {conflicts.length > 0 && (
-            <Alert message={`${conflicts.length} Vardiya Catismasi Tespit Edildi`} description={
+            <Alert message={`${conflicts.length} shift conflict(s) detected`} description={
               <ul style={{ margin: 0, paddingLeft: 20 }}>
                 {conflicts.slice(0, 3).map((conflict, index) => (<li key={index}><Tag color={conflict.type === 'overtime' ? 'orange' : 'red'}>{conflict.type.toUpperCase()}</Tag>{conflict.message}</li>))}
-                {conflicts.length > 3 && <li>...ve {conflicts.length - 3} daha</li>}
+                {conflicts.length > 3 && <li>…and {conflicts.length - 3} more</li>}
               </ul>
             } type="warning" showIcon icon={<WarningOutlined />} style={{ marginBottom: 24 }} />
           )}
@@ -223,20 +223,20 @@ export default function ShiftsPage() {
           <Card bordered={false} style={{ marginBottom: 24 }}>
             <Row gutter={16} align="middle">
               <Col xs={24} sm={8}>
-                <Text strong style={{ display: 'block', marginBottom: 8 }}>Tarih Araligi</Text>
+                <Text strong style={{ display: 'block', marginBottom: 8 }}>Date range</Text>
                 <RangePicker value={dateRange} onChange={(dates) => setDateRange(dates as [Dayjs, Dayjs])} style={{ width: '100%' }} />
               </Col>
               <Col xs={24} sm={8}>
-                <Text strong style={{ display: 'block', marginBottom: 8 }}>Departman</Text>
-                <Select placeholder="Tum departmanlar" style={{ width: '100%' }} value={selectedDepartment} onChange={setSelectedDepartment} allowClear>
+                <Text strong style={{ display: 'block', marginBottom: 8 }}>Department</Text>
+                <Select placeholder="All departments" style={{ width: '100%' }} value={selectedDepartment} onChange={setSelectedDepartment} allowClear>
                   {departments.map((dept) => (<Option key={dept.id} value={dept.id}>{dept.name}</Option>))}
                 </Select>
               </Col>
               <Col xs={24} sm={8}>
-                <Text strong style={{ display: 'block', marginBottom: 8 }}>Gorunum</Text>
+                <Text strong style={{ display: 'block', marginBottom: 8 }}>View</Text>
                 <Tabs activeKey={viewMode} onChange={(key) => setViewMode(key as 'list' | 'calendar')} items={[
-                  { key: 'list', label: <><UnorderedListOutlined /> Liste</> },
-                  { key: 'calendar', label: <><CalendarOutlined /> Takvim</> },
+                  { key: 'list', label: <><UnorderedListOutlined /> List</> },
+                  { key: 'calendar', label: <><CalendarOutlined /> Calendar</> },
                 ]} />
               </Col>
             </Row>
@@ -246,7 +246,7 @@ export default function ShiftsPage() {
             {viewMode === 'list' ? (
               <Table columns={columns} dataSource={shifts} rowKey="id" pagination={{
                 current: pagination.page, pageSize: pagination.pageSize, total: pagination.total,
-                showSizeChanger: true, showTotal: (total) => `Toplam ${total} vardiya`,
+                showSizeChanger: true, showTotal: (total) => `${total} shifts`,
                 onChange: (page, pageSize) => setPagination({ ...pagination, page, pageSize }),
               }} />
             ) : (
@@ -254,48 +254,48 @@ export default function ShiftsPage() {
             )}
           </Card>
 
-          <Modal title={editingShift ? 'Vardiya Duzenle' : 'Yeni Vardiya Olustur'} open={isModalOpen} onCancel={() => { setIsModalOpen(false); form.resetFields(); }} footer={null} width={600}>
+          <Modal title={editingShift ? 'Edit shift' : 'New shift'} open={isModalOpen} onCancel={() => { setIsModalOpen(false); form.resetFields(); }} footer={null} width={600}>
             <Form form={form} layout="vertical" onFinish={handleSubmit}>
               <Row gutter={16}>
                 <Col span={12}>
-                  <Form.Item name="employee_id" label="Calisan" rules={[{ required: true, message: 'Calisan secin' }]}>
-                    <Select placeholder="Calisan secin" showSearch optionFilterProp="children">
+                  <Form.Item name="employee_id" label="Employee" rules={[{ required: true, message: 'Select an employee' }]}>
+                    <Select placeholder="Select an employee" showSearch optionFilterProp="children">
                       {employees.map((emp) => (<Option key={emp.id} value={emp.id}>{emp.name} - {emp.department_name}</Option>))}
                     </Select>
                   </Form.Item>
                 </Col>
                 <Col span={12}>
-                  <Form.Item name="department_id" label="Departman" rules={[{ required: true, message: 'Departman secin' }]}>
-                    <Select placeholder="Departman secin">{departments.map((dept) => (<Option key={dept.id} value={dept.id}>{dept.name}</Option>))}</Select>
+                  <Form.Item name="department_id" label="Department" rules={[{ required: true, message: 'Select a department' }]}>
+                    <Select placeholder="Select a department">{departments.map((dept) => (<Option key={dept.id} value={dept.id}>{dept.name}</Option>))}</Select>
                   </Form.Item>
                 </Col>
               </Row>
               <Row gutter={16}>
                 <Col span={12}>
-                  <Form.Item name="date" label="Tarih" rules={[{ required: true, message: 'Tarih secin' }]}>
+                  <Form.Item name="date" label="Date" rules={[{ required: true, message: 'Select a date' }]}>
                     <DatePicker style={{ width: '100%' }} />
                   </Form.Item>
                 </Col>
                 <Col span={12}>
-                  <Form.Item name="time_range" label="Saat Araligi" rules={[{ required: true, message: 'Saat araligi secin' }]}>
+                  <Form.Item name="time_range" label="Time range" rules={[{ required: true, message: 'Select a time range' }]}>
                     <TimePicker.RangePicker format="HH:mm" style={{ width: '100%' }} />
                   </Form.Item>
                 </Col>
               </Row>
               {editingShift && (
-                <Form.Item name="status" label="Durum">
+                <Form.Item name="status" label="Status">
                   <Select>
-                    <Option value="scheduled">Planli</Option>
-                    <Option value="in_progress">Devam Ediyor</Option>
-                    <Option value="completed">Tamamlandi</Option>
-                    <Option value="cancelled">Iptal Edildi</Option>
+                    <Option value="scheduled">Scheduled</Option>
+                    <Option value="in_progress">In progress</Option>
+                    <Option value="completed">Completed</Option>
+                    <Option value="cancelled">Cancelled</Option>
                   </Select>
                 </Form.Item>
               )}
               <Form.Item style={{ marginBottom: 0, textAlign: 'right' }}>
                 <Space>
-                  <Button onClick={() => setIsModalOpen(false)}>Iptal</Button>
-                  <Button type="primary" htmlType="submit">{editingShift ? 'Guncelle' : 'Olustur'}</Button>
+                  <Button onClick={() => setIsModalOpen(false)}>Cancel</Button>
+                  <Button type="primary" htmlType="submit">{editingShift ? 'Update' : 'Create'}</Button>
                 </Space>
               </Form.Item>
             </Form>
