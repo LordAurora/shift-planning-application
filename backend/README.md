@@ -26,10 +26,24 @@ cp .env.example .env
 alembic upgrade head
 ```
 
-5. Start the server:
+5. (Optional) Load the synthetic demo workforce:
+```bash
+python -m app.scripts.seed_demo_data
+```
+
+6. Start the server:
 ```bash
 uvicorn app.main:app --reload
 ```
+
+## Tests
+
+```bash
+pip install -r requirements-dev.txt
+python -m pytest tests -q
+```
+
+The optional TensorFlow layer of the Security AI module is installed with `pip install -r requirements-ml.txt`. Without it, scans run with the rule engine.
 
 ## API Documentation
 
