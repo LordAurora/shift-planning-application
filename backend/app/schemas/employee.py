@@ -1,5 +1,5 @@
-from pydantic import BaseModel, EmailStr
-from typing import Optional, List
+from pydantic import BaseModel, EmailStr, Field
+from typing import Literal, Optional, List
 from datetime import datetime
 
 
@@ -9,10 +9,17 @@ class AvailabilitySlot(BaseModel):
     end_time: str  # HH:MM format
 
 
+ShiftPreference = Literal["morning", "day", "afternoon", "night"]
+WorkModel = Literal["office", "remote", "hybrid"]
+
+
 class EmployeePreferences(BaseModel):
-    preferred_shift: Optional[str] = None  # morning | day | afternoon | night
-    weekly_off_day: Optional[int] = None  # 0-6 (Sunday-Saturday)
-    work_model: Optional[str] = None  # office | remote | hybrid
+    preferred_shift: Optional[ShiftPreference] = None  # None = no preference
+    weekly_off_day: Optional[int] = Field(None, ge=0, le=6)  # 0-6 (Sunday-Saturday)
+    work_model: Optional[WorkModel] = None
+    office_days: Optional[int] = Field(None, ge=0, le=7)
+    remote_days: Optional[int] = Field(None, ge=0, le=7)
+    notes: Optional[str] = Field(None, max_length=1000)
 
 
 class EmployeeBase(BaseModel):

@@ -16,6 +16,7 @@ import 'services/api/auth_service.dart';
 import 'services/api/shift_service.dart';
 import 'services/api/notification_service.dart';
 import 'services/api/leave_request_service.dart';
+import 'services/api/preferences_service.dart';
 
 // Providers
 import 'providers/auth_provider.dart';
@@ -88,6 +89,7 @@ class _ShiftMasterAppState extends State<ShiftMasterApp> with WidgetsBindingObse
   late ShiftService _shiftService;
   late NotificationService _notificationService;
   late LeaveRequestService _leaveRequestService;
+  late PreferencesService _preferencesService;
   
   late AuthProvider _authProvider;
   late ShiftProvider _shiftProvider;
@@ -139,6 +141,7 @@ class _ShiftMasterAppState extends State<ShiftMasterApp> with WidgetsBindingObse
     _shiftService = ShiftService(client: _apiClient);
     _notificationService = NotificationService(client: _apiClient);
     _leaveRequestService = LeaveRequestService(client: _apiClient);
+    _preferencesService = PreferencesService(client: _apiClient);
     
     // Providers
     _authProvider = AuthProvider(
@@ -195,6 +198,7 @@ class _ShiftMasterAppState extends State<ShiftMasterApp> with WidgetsBindingObse
         Provider<StorageService>.value(value: widget.storageService),
         Provider<ConnectivityService>.value(value: widget.connectivityService),
         Provider<PushNotificationService>.value(value: widget.pushNotificationService),
+        Provider<PreferencesService>.value(value: _preferencesService),
         
         // Providers
         ChangeNotifierProvider<AuthProvider>.value(value: _authProvider),

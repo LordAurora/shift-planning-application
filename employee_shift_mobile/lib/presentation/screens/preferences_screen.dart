@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../../services/api/preferences_service.dart';
 
 class PreferencesScreen extends StatefulWidget {
   const PreferencesScreen({super.key});
@@ -24,8 +26,6 @@ class _PreferencesScreenState extends State<PreferencesScreen> {
   // Ek notlar
   final TextEditingController _notesController = TextEditingController();
   
-  // Özel izin günleri
-  List<String> _blockedDays = [];
   
   bool _isLoading = false;
 
@@ -54,44 +54,71 @@ class _PreferencesScreenState extends State<PreferencesScreen> {
   ];
 
   @override
+  void initState() {
+    super.initState();
+    _loadPreferences();
+  }
+
+  @override
   void dispose() {
     _notesController.dispose();
     super.dispose();
   }
 
-  void _savePreferences() async {
+  Future<void> _loadPreferences() async {
+    try {
+      final prefs = await context.read<PreferencesService>().getMyPreferences();
+      if (!mounted) return;
+      setState(() {
+        _preferredShift = prefs.preferredShift;
+        _selectedOffDay = prefs.weeklyOffDay;
+        _workModel = prefs.workModel;
+        _officeDays = prefs.officeDays;
+        _remoteDays = prefs.remoteDays;
+        _notesController.text = prefs.notes;
+      });
+    } catch (e) {
+      // Keep the defaults when the profile has no preferences yet or the device is offline
+      debugPrint('Could not load preferences: $e');
+    }
+  }
+
+  Future<void> _savePreferences() async {
     setState(() {
       _isLoading = true;
     });
 
-    // Simüle edilmiş API çağrısı
-    await Future.delayed(const Duration(seconds: 2));
+    final preferences = EmployeePreferences(
+      preferredShift: _preferredShift,
+      weeklyOffDay: _selectedOffDay,
+      workModel: _workModel,
+      officeDays: _officeDays,
+      remoteDays: _remoteDays,
+      notes: _notesController.text,
+    );
 
-    final preferences = {
-      'weeklyOffDay': _selectedOffDay,
-      'workModel': _workModel,
-      'officeDays': _officeDays,
-      'remoteDays': _remoteDays,
-      'preferredShift': _preferredShift,
-      'blockedDays': _blockedDays,
-      'notes': _notesController.text,
-    };
+    bool saved = false;
+    try {
+      await context.read<PreferencesService>().saveMyPreferences(preferences);
+      saved = true;
+    } catch (e) {
+      debugPrint('Could not save preferences: $e');
+    }
 
-    debugPrint('Tercihler kaydedildi: $preferences');
-
+    if (!mounted) return;
     setState(() {
       _isLoading = false;
     });
 
-    if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Your preferences were saved'),
-          backgroundColor: Colors.green,
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
-    }
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(saved
+            ? 'Your preferences were saved'
+            : 'Could not save your preferences. Please try again.'),
+        backgroundColor: saved ? Colors.green : Colors.red,
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
   }
 
   @override

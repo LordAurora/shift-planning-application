@@ -17,6 +17,7 @@ class ApiEndpoints {
   // Employees
   static const String employees = '/employees';
   static String employeeById(int id) => '/employees/$id';
+  static const String myPreferences = '/employees/me/preferences';
   
   // Departments
   static const String departments = '/departments';

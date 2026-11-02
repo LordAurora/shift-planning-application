@@ -11,7 +11,8 @@ from app.schemas.employee import (
     EmployeeCreate,
     EmployeeUpdate,
     EmployeeResponse,
-    EmployeeListResponse
+    EmployeeListResponse,
+    EmployeePreferences,
 )
 from app.utils.security import get_current_user, require_role
 
@@ -19,6 +20,39 @@ router = APIRouter(prefix="/employees", tags=["Employees"])
 
 # Password hashing
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+
+
+def _employee_for_user(db: Session, user: User) -> Employee:
+    employee = db.query(Employee).filter(Employee.email == user.email).first()
+    if not employee:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="No employee profile is linked to this account",
+        )
+    return employee
+
+
+@router.get("/me/preferences", response_model=EmployeePreferences)
+async def get_my_preferences(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """Scheduling preferences of the signed-in employee (used by the mobile app)."""
+    employee = _employee_for_user(db, current_user)
+    return EmployeePreferences(**(employee.preferences or {}))
+
+
+@router.put("/me/preferences", response_model=EmployeePreferences)
+async def update_my_preferences(
+    preferences: EmployeePreferences,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """Update the signed-in employee's preferences. The optimizer uses them on the next run."""
+    employee = _employee_for_user(db, current_user)
+    employee.preferences = preferences.model_dump()
+    db.commit()
+    return preferences
 
 
 @router.get("", response_model=EmployeeListResponse)
