@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, Text, Date, DateTime, Enum as SQLEnum, ForeignKey
+from sqlalchemy import Column, Integer, Text, Date, DateTime, Enum as SQLEnum, ForeignKey, Index
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from app.database import Base
@@ -23,6 +23,10 @@ class LeaveRequest(Base):
     """Leave request model"""
 
     __tablename__ = "leave_requests"
+    __table_args__ = (
+        Index('ix_leave_requests_user_dates', 'user_id', 'start_date', 'end_date'),
+        Index('ix_leave_requests_status_created', 'status', 'created_at'),
+    )
 
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False)

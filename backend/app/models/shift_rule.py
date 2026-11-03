@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Time, Boolean, JSON
+from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Time, Boolean, JSON, Index
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from app.database import Base
@@ -7,6 +7,9 @@ from app.database import Base
 class ShiftRule(Base):
     """Shift rule model for defining shift requirements"""
     __tablename__ = "shift_rules"
+    __table_args__ = (
+        Index('ix_shift_rules_department_active', 'department_id', 'is_active'),
+    )
 
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String(255), nullable=False)

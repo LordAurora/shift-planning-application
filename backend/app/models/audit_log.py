@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, DateTime, Text, JSON
+from sqlalchemy import Column, Integer, String, DateTime, Text, JSON, Index
 from sqlalchemy.sql import func
 from app.database import Base
 
@@ -6,6 +6,10 @@ from app.database import Base
 class AuditLog(Base):
     """Audit log model for tracking changes"""
     __tablename__ = "audit_logs"
+    __table_args__ = (
+        Index('ix_audit_logs_resource', 'resource_type', 'resource_id'),
+        Index('ix_audit_logs_created', 'created_at'),
+    )
 
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, nullable=True)  # Nullable for system actions

@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Enum as SQLEnum
+from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Enum as SQLEnum, Index
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from app.database import Base
@@ -14,6 +14,12 @@ class ShiftStatus(str, enum.Enum):
 class Shift(Base):
     """Shift model"""
     __tablename__ = "shifts"
+    __table_args__ = (
+        Index('ix_shifts_start_end', 'start_time', 'end_time'),
+        Index('ix_shifts_employee_start', 'employee_id', 'start_time'),
+        Index('ix_shifts_department_start', 'department_id', 'start_time'),
+        Index('ix_shifts_status', 'status'),
+    )
 
     id = Column(Integer, primary_key=True, index=True)
     employee_id = Column(Integer, ForeignKey("employees.id"), nullable=False)
