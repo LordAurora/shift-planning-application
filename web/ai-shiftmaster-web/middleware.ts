@@ -12,7 +12,6 @@ const PROTECTED_ROUTES = [
   '/settings',
   '/ai-optimization',
   '/profile',
-  '/security',
 ];
 
 /**
@@ -32,9 +31,6 @@ const ADMIN_ROUTES = [
   '/employees',
   '/rules',
   '/settings/system',
-  '/security/rules',
-  '/security/training',
-  '/security/migration',
 ];
 
 /**

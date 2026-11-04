@@ -15,11 +15,6 @@ import {
   MenuFoldOutlined,
   MenuUnfoldOutlined,
   FileTextOutlined,
-  SecurityScanOutlined,
-  CodeOutlined,
-  ExperimentOutlined,
-  CloudServerOutlined,
-  BugOutlined,
 } from '@ant-design/icons';
 import type { MenuProps } from 'antd';
 import { useAuthStore } from '../store/authStore';
@@ -58,38 +53,6 @@ const menuItems: MenuProps['items'] = [
     key: '/ai-optimization',
     icon: <RobotOutlined />,
     label: 'AI Optimization',
-  },
-  {
-    key: 'security-ai',
-    icon: <SecurityScanOutlined />,
-    label: 'Security AI',
-    children: [
-      {
-        key: '/security',
-        icon: <DashboardOutlined />,
-        label: 'Dashboard',
-      },
-      {
-        key: '/security/scan',
-        icon: <BugOutlined />,
-        label: 'Vulnerability Scan',
-      },
-      {
-        key: '/security/rules',
-        icon: <CodeOutlined />,
-        label: 'Detection Rules',
-      },
-      {
-        key: '/security/training',
-        icon: <ExperimentOutlined />,
-        label: 'ML Training',
-      },
-      {
-        key: '/security/migration',
-        icon: <CloudServerOutlined />,
-        label: 'Huawei Migration',
-      },
-    ],
   },
   {
     key: '/settings',

@@ -26,11 +26,6 @@ build/
 .flutter-plugins
 .flutter-plugins-dependencies
 
-# Security AI artifacts
-*.h5
-*.ckpt
-checkpoints/
-
 # IDE / OS
 .idea/
 .vscode/

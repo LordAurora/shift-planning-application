@@ -42,11 +42,11 @@
 
 ## Overview
 
-ShiftMaster AI turns employee availability, shift preferences and labor rules into a ready-to-publish schedule. Managers plan, review and analyze schedules in the **web dashboard**. Employees use the **mobile app** to see their week, request leave and set their preferences, even when they are offline. A separate **Security AI** module scans source code for vulnerabilities using a hybrid rule + ML detection engine.
+ShiftMaster AI turns employee availability, shift preferences and labor rules into a ready-to-publish schedule. Managers plan, review and analyze schedules in the **web dashboard**. Employees use the **mobile app** to see their week, request leave and set their preferences, even when they are offline.
 
 | Client | Audience | Purpose |
 | --- | --- | --- |
-| **Web dashboard** (Next.js) | Admins, managers | Employees, shifts, rules, AI optimization, analytics, security scanning |
+| **Web dashboard** (Next.js) | Admins, managers | Employees, shifts, rules, AI optimization, analytics |
 | **Mobile app** (Flutter) | Employees | Weekly shifts, leave requests, shift preferences, notifications, profile |
 | **REST API** (FastAPI) | Both clients | Auth, scheduling engine, business rules, real-time events, health and metrics |
 
@@ -62,19 +62,13 @@ The web dashboard and the mobile app share the same branding, color palette (`#1
 | --- | --- |
 | <img src="docs/screenshots/dashboard.png" alt="Dashboard"><br>**Dashboard:** KPIs, shifts by weekday, department mix, six-month trend and upcoming shifts, all computed from live data. | <img src="docs/screenshots/ai-optimization.png" alt="AI optimization"><br>**AI optimization:** a full week for 204 employees, with its score, coverage, preference match and fairness. |
 | <img src="docs/screenshots/employees.png" alt="Employees"><br>**Employees:** contract limits, roles and each person’s preferred shift and day off. | <img src="docs/screenshots/shifts.png" alt="Shifts"><br>**Shifts:** list and calendar views with conflict detection. |
-| <img src="docs/screenshots/rules.png" alt="Shift rules"><br>**Shift rules:** staffing requirements per department, role and day. | <img src="docs/screenshots/security-dashboard.png" alt="Security AI dashboard"><br>**Security AI dashboard:** statistics from real scans, plus the engine’s status. |
-| <img src="docs/screenshots/security-scan.png" alt="Vulnerability scanner"><br>**Vulnerability scanner:** findings with CWE/OWASP mapping, line numbers and fixes. | <img src="docs/screenshots/security-rules.png" alt="Detection rules"><br>**Detection rules:** the rule set loaded in the engine. |
-
-### Sign-in and onboarding
-
-| | |
-| --- | --- |
-| <img src="docs/screenshots/login.png" alt="Sign in"> | <img src="docs/screenshots/register.png" alt="Create account"> |
+| <img src="docs/screenshots/rules.png" alt="Shift rules"><br>**Shift rules:** staffing requirements per department, role and day. | <img src="docs/screenshots/login.png" alt="Sign in"><br>**Sign in:** split-screen SaaS layout shared with the sign-up page. |
 
 <details>
-<summary><b>Full landing page and mobile view</b></summary>
+<summary><b>Sign-up, full landing page and mobile view</b></summary>
 
 <p align="center">
+  <img src="docs/screenshots/register.png" alt="Create account" width="80%">
   <img src="docs/screenshots/landing-full.png" alt="Full landing page" width="80%">
   <img src="docs/screenshots/landing-mobile.png" alt="Landing page on mobile" width="300">
 </p>
@@ -103,13 +97,6 @@ The web dashboard and the mobile app share the same branding, color palette (`#1
 - A dashboard computed on the server from real shift data, filterable by week or month.
 - Server-Sent Events (`/events/stream`) with a polling fallback.
 - An in-app notification center, plus push notifications on mobile.
-
-### Security AI module
-- A **hybrid detector**: a deterministic regex/AST rule engine, an optional TensorFlow model, and a fusion layer that combines the two (Conservative / Balanced / Aggressive). Critical rule matches are never suppressed.
-- 13 rules mapped to OWASP Top 10 and CWE, covering SQL and command injection, hardcoded secrets, insecure deserialization, weak cryptography, path traversal and more.
-- Scans are stored in the database, which feeds the Security dashboard.
-- When no trained model is loaded, scans run in rule-based mode, and the UI says so instead of showing model metrics.
-- A training toolkit (stratified/temporal splitting, SMOTE, focal loss, evaluation, continuous learning) and a MindSpore/Ascend migration plan are included as design references.
 
 ### Mobile app (Flutter)
 - Home screen with the current and next shift, a weekly schedule, leave requests, preferences, notifications and profile.
@@ -160,7 +147,6 @@ flowchart LR
         MW["Middleware<br/>JWT · Rate limit · Logging"]
         R["REST Routers<br/>/api/v1/*"]
         D["Domain Services<br/>Optimizer · Rule Engine · Leave · Audit"]
-        S["Security AI<br/>Hybrid Rule + ML Detector"]
         E["SSE Event Stream"]
     end
 
@@ -174,7 +160,6 @@ flowchart LR
     W -- "HTTPS / JSON" --> MW
     M -- "HTTPS / JSON" --> MW
     MW --> R --> D --> DB
-    R --> S --> DB
     E -. "real-time" .-> W
     D --> Q --> C
     C --> F -. "push" .-> M
@@ -208,7 +193,6 @@ sequenceDiagram
 | **Auth & security** | JWT (python-jose), bcrypt (passlib), RBAC, rate-limiting middleware |
 | **Async / jobs** | Celery, Redis, Server-Sent Events |
 | **Database** | PostgreSQL (GaussDB-compatible) |
-| **Security AI** | Regex/AST rule engine, NumPy, optional TensorFlow model, MindSpore migration templates |
 | **Web** | Next.js 16 (App Router), React 19, TypeScript, Ant Design 6, Tailwind CSS 4, Zustand, Axios, Recharts, Day.js, SheetJS |
 | **Mobile** | Flutter / Dart, Provider, Dio, go_router, sqflite, flutter_secure_storage, connectivity_plus, Firebase Messaging |
 | **Quality** | pytest, ESLint, TypeScript strict mode |
@@ -220,7 +204,7 @@ sequenceDiagram
 ```text
 shift-planning-application/
 ├── backend/                      # FastAPI service
-│   ├── alembic/versions/         # 001 schema · 002 leave · 003 indexes · 004 preferences · 005 security scans
+│   ├── alembic/versions/         # 001 schema · 002 leave · 003 indexes · 004 preferences
 │   ├── app/
 │   │   ├── domain/services/      # schedule_optimizer.py, rule engine, leave, audit
 │   │   ├── middleware/           # Rate limiting, logging, security headers
@@ -228,7 +212,6 @@ shift-planning-application/
 │   │   ├── routers/              # REST endpoints (/api/v1)
 │   │   ├── schemas/              # Pydantic request/response schemas
 │   │   ├── scripts/              # seed_demo_data.py + synthetic dataset
-│   │   ├── security_ai/          # Hybrid vulnerability detection engine and ML toolkit
 │   │   ├── tasks/                # Celery background jobs
 │   │   └── utils/                # Hashing and JWT helpers
 │   └── tests/                    # Optimizer unit tests
@@ -236,7 +219,6 @@ shift-planning-application/
 │   └── app/
 │       ├── landing/  login/  register/
 │       ├── dashboard/  employees/  shifts/  rules/  ai-optimization/
-│       ├── security/             # Dashboard, scanner, rules, training and migration previews
 │       └── components/  lib/  store/  theme/  types/
 ├── employee_shift_mobile/        # Flutter employee app
 │   └── lib/  core/  data/  providers/  services/  presentation/
@@ -262,7 +244,7 @@ shift-planning-application/
 cd backend
 python -m venv venv
 # Windows: venv\Scripts\activate   |   macOS/Linux: source venv/bin/activate
-pip install -r requirements.txt          # add -r requirements-ml.txt for the optional TensorFlow layer
+pip install -r requirements.txt
 
 cp .env.example .env                     # set DATABASE_URL and SECRET_KEY
 alembic upgrade head                     # create the schema
@@ -354,7 +336,6 @@ All business endpoints are served under `/api/v1`. When the backend is running, 
 | **Leave requests** | `GET/POST /leave-requests` · `GET /leave-requests/my` · `DELETE /leave-requests/{id}` · `/leave-requests/v2/*` (balance, decide, pending, analytics) |
 | **Notifications** | `GET /notifications` · `PUT /notifications/{id}/read` · `PUT /notifications/read-all` · `DELETE /notifications/{id}` |
 | **Events** | `GET /events/stream` (SSE) · `GET /events/poll` · `GET /events/stats` |
-| **Security AI** | `POST/GET /security/scans` · `GET /security/dashboard/stats` · `GET /security/engine/rules` · `POST /security/scan/code` · `POST /security/scan/file` · `POST /security/scan/project` · `POST /security/quick-fix` |
 | **Health** (root) | `GET /health` · `/health/ready` · `/health/live` · `/health/detailed` · `/metrics` · `/metrics/json` · `/info` |
 
 <details>
@@ -395,7 +376,6 @@ erDiagram
     EMPLOYEE ||--o{ SHIFT : "is assigned"
     USER ||--o{ LEAVE_REQUEST : submits
     USER ||--o{ NOTIFICATION : receives
-    USER ||--o{ SECURITY_SCAN : runs
     USER ||--o{ AUDIT_LOG : performs
 ```
 
@@ -408,10 +388,9 @@ erDiagram
 | `shift_rules` | Staffing requirements per department, role, day and time range |
 | `leave_requests` | Leave applications and approval state |
 | `notifications` | User notifications |
-| `security_scans` | Stored Security AI scans and their findings |
 | `audit_logs` | Change history for compliance |
 
-The schema is versioned with Alembic. There are five migrations, and they are tested both upgrading and downgrading.
+The schema is versioned with Alembic. There are four migrations, and they are tested both upgrading and downgrading.
 
 ---
 
@@ -428,9 +407,7 @@ The schema is versioned with Alembic. There are five migrations, and they are te
 
 ## Roadmap
 
-- [ ] Ship trained weights for the Security AI model, and connect the **ML training** and **MindSpore migration** pages, which currently show labeled sample data.
 - [ ] Add API integration tests and Playwright end-to-end tests, and run them in a CI pipeline.
-- [ ] Persist mobile preference changes through the API (the backend field already exists).
 - [ ] Add Docker Compose for one-command local setup.
 - [ ] Add multi-tenant workspaces for self-service company sign-up.
 

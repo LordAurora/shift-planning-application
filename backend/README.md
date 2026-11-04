@@ -43,8 +43,6 @@ pip install -r requirements-dev.txt
 python -m pytest tests -q
 ```
 
-The optional TensorFlow layer of the Security AI module is installed with `pip install -r requirements-ml.txt`. Without it, scans run with the rule engine.
-
 ## API Documentation
 
 Once running, visit:

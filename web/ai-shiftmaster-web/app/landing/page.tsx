@@ -4,7 +4,6 @@ import React, { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import {
   AlertOutlined,
-  ApiOutlined,
   ArrowRightOutlined,
   BarChartOutlined,
   BellOutlined,
@@ -143,7 +142,6 @@ export default function LandingPage() {
             <a href="#features">Features</a>
             <a href="#how">How it works</a>
             <a href="#mobile">Mobile</a>
-            <a href="#security">Security AI</a>
           </nav>
           <div className="lp-nav-cta">
             <Link href="/login" className="lp-btn lp-btn-ghost">Sign in</Link>
@@ -246,7 +244,7 @@ export default function LandingPage() {
             { value: <CountUp to={200} suffix="+" />, label: 'employees scheduled in one run' },
             { value: <CountUp to={2} suffix=" s" />, label: 'to plan a full week' },
             { value: <CountUp to={99.4} decimals={1} suffix="%" />, label: 'preference match on the demo data' },
-            { value: <CountUp to={13} />, label: 'security rules in the Security AI engine' },
+            { value: <CountUp to={11} suffix=" h" />, label: 'minimum rest between shifts, always enforced' },
           ].map((item, i) => (
             <div className="lp-number reveal" style={{ transitionDelay: `${i * 90}ms` }} key={i}>
               <div className="lp-number-value">{item.value}</div>
@@ -351,41 +349,6 @@ export default function LandingPage() {
                   </div>
                 ))}
               </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* ------------------------------------------------ Security */}
-      <section className="lp-section lp-section-dark" id="security">
-        <div className="lp-container lp-split lp-split-reverse">
-          <div className="lp-split-copy reveal">
-            <span className="lp-eyebrow lp-eyebrow-light">Security AI module</span>
-            <h2>Built-in code scanning with a hybrid rule + ML engine.</h2>
-            <p>
-              The platform ships with a vulnerability scanner mapped to OWASP Top 10 and CWE. Critical rules always
-              take precedence, so known high-impact issues are never suppressed.
-            </p>
-            <ul className="lp-list lp-list-light">
-              <li><SafetyCertificateOutlined /> SQL & command injection, hardcoded secrets, weak crypto</li>
-              <li><ApiOutlined /> Every finding includes line numbers and a fix</li>
-              <li><BarChartOutlined /> Scan history and severity analytics</li>
-            </ul>
-          </div>
-          <div className="lp-code reveal">
-            <div className="lp-code-bar"><span /><span /><span /><em>payments.py</em></div>
-            <pre>
-              <code>
-                <span className="ln">5</span>def get_user(cursor, user_id):{'\n'}
-                <span className="ln">6</span>    <mark className="lp-hit">cursor.execute(&quot;SELECT … &quot; + user_id)</mark>{'\n'}
-                <span className="ln">7</span>{'\n'}
-                <span className="ln">8</span>def run(cmd):{'\n'}
-                <span className="ln">9</span>    <mark className="lp-hit lp-hit-2">os.system(&quot;ping &quot; + cmd)</mark>
-              </code>
-            </pre>
-            <div className="lp-findings">
-              <div className="lp-finding" style={{ animationDelay: '0.2s' }}><b>CRITICAL</b> SQL Injection · CWE-89 · line 6</div>
-              <div className="lp-finding" style={{ animationDelay: '0.5s' }}><b>CRITICAL</b> Command Injection · CWE-78 · line 9</div>
             </div>
           </div>
         </div>
