@@ -37,6 +37,7 @@ import type { ColumnsType } from 'antd/es/table';
 import DashboardLayout from '../components/DashboardLayout';
 import { Employee, Department, AvailabilitySlot } from '../types';
 import { employeeService, departmentService } from '../lib/services';
+import { apiErrorMessage } from '../lib/api';
 import dayjs from 'dayjs';
 
 const { Title, Text } = Typography;
@@ -207,7 +208,7 @@ export default function EmployeesPage() {
         end_time: (values.availability_end as dayjs.Dayjs).format('HH:mm'),
       }));
 
-      const employeeData: any = {
+      const employeeData: Partial<Employee> & { password?: string } = {
         name: values.name as string,
         email: values.email as string,
         role: values.role as string,
@@ -220,21 +221,21 @@ export default function EmployeesPage() {
       if (editingEmployee) {
         // Only include password if it was changed
         if (values.password) {
-          employeeData.password = values.password;
+          employeeData.password = values.password as string;
         }
         await employeeService.update(editingEmployee.id, employeeData);
         message.success('Employee updated');
       } else {
         // Password is required for new employees
-        employeeData.password = values.password;
+        employeeData.password = values.password as string;
         await employeeService.create(employeeData);
         message.success('Employee created');
       }
       setModalVisible(false);
       form.resetFields();
       fetchEmployees();
-    } catch (error: any) {
-      message.error(error?.response?.data?.detail || 'Failed to save employee');
+    } catch (error) {
+      message.error(apiErrorMessage(error, 'Failed to save employee'));
     }
   };
 

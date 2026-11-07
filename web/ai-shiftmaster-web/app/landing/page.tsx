@@ -107,7 +107,7 @@ const FEATURES = [
   { icon: <HeartOutlined />, title: 'Preferences that count', text: 'Preferred shifts and weekly days off are part of the objective from the start.' },
   { icon: <AlertOutlined />, title: 'Conflict detection', text: 'Overlaps, overtime and understaffed slots are flagged before you publish.' },
   { icon: <BarChartOutlined />, title: 'Live workforce analytics', text: 'Coverage, planned hours and shift mix for any week or month, exportable to Excel.' },
-  { icon: <BellOutlined />, title: 'Real-time updates', text: 'Server-sent events keep dashboards current; push notifications reach the mobile app.' },
+  { icon: <BellOutlined />, title: 'Notifications built in', text: 'In-app notifications for managers, push notifications and background sync on the mobile app.' },
 ];
 
 const STEPS = [

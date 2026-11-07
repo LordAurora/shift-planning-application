@@ -50,7 +50,7 @@ The engine has no framework dependencies and is covered by [`tests/test_schedule
 
 - Next.js App Router, React 19, Ant Design 6 and Zustand.
 - [`app/lib/api.ts`](../web/ai-shiftmaster-web/app/lib/api.ts) is an Axios client that attaches the token and handles `401` responses. [`app/lib/services.ts`](../web/ai-shiftmaster-web/app/lib/services.ts) holds the typed API calls.
-- [`middleware.ts`](../web/ai-shiftmaster-web/middleware.ts) protects routes by role, using cookies mirrored from the auth store.
+- [`proxy.ts`](../web/ai-shiftmaster-web/proxy.ts) (Next.js 16 route middleware) protects routes by role, using cookies mirrored from the auth store.
 - Public pages are `/landing`, `/login` and `/register`. Everything else sits inside `DashboardLayout`.
 
 ## 5. Mobile app

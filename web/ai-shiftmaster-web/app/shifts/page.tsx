@@ -41,11 +41,20 @@ import type { Dayjs } from 'dayjs';
 import DashboardLayout from '../components/DashboardLayout';
 import { Shift, ShiftConflict, Employee, Department } from '../types';
 import { shiftService, employeeService, departmentService } from '../lib/services';
+import { apiErrorMessage } from '../lib/api';
 import dayjs from 'dayjs';
 
 const { Title, Text } = Typography;
 const { Option } = Select;
 const { RangePicker } = DatePicker;
+
+interface ShiftFormValues {
+  employee_id: number;
+  department_id: number;
+  date: Dayjs;
+  time_range: [Dayjs, Dayjs];
+  status?: Shift['status'];
+}
 
 export default function ShiftsPage() {
   const [shifts, setShifts] = useState<Shift[]>([]);
@@ -64,7 +73,10 @@ export default function ShiftsPage() {
   const fetchData = async () => {
     setLoading(true);
     try {
-      const params: any = { page: pagination.page, page_size: pagination.pageSize };
+      const params: { page: number; page_size: number; department_id?: number; start_date?: string; end_date?: string } = {
+        page: pagination.page,
+        page_size: pagination.pageSize,
+      };
       if (selectedDepartment) params.department_id = selectedDepartment;
       if (dateRange) {
         params.start_date = dateRange[0].format('YYYY-MM-DD');
@@ -119,7 +131,7 @@ export default function ShiftsPage() {
     catch { message.error('Failed to delete shift'); }
   };
 
-  const handleSubmit = async (values: any) => {
+  const handleSubmit = async (values: ShiftFormValues) => {
     try {
       const shiftData = {
         employee_id: values.employee_id,
@@ -131,7 +143,7 @@ export default function ShiftsPage() {
       if (editingShift) { await shiftService.update(editingShift.id, shiftData); message.success('Shift updated'); }
       else { await shiftService.create(shiftData); message.success('Shift created'); }
       setIsModalOpen(false); form.resetFields(); fetchData();
-    } catch (error: any) { message.error(error?.response?.data?.detail || 'Operation failed'); }
+    } catch (error) { message.error(apiErrorMessage(error, 'Operation failed')); }
   };
 
   const getStatusColor = (status: string) => {

@@ -44,7 +44,7 @@ const MANAGER_ROUTES = [
 /**
  * Next.js middleware for authentication and authorization
  */
-export function middleware(request: NextRequest) {
+export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
   
   // Skip middleware for static files and API routes

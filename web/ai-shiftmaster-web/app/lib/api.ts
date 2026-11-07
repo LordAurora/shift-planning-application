@@ -49,4 +49,10 @@ apiClient.interceptors.response.use(
   }
 );
 
+/** Readable message from an API error, falling back to `fallback`. */
+export const apiErrorMessage = (error: unknown, fallback: string): string => {
+  const detail = axios.isAxiosError(error) ? error.response?.data?.detail : undefined;
+  return typeof detail === 'string' ? detail : fallback;
+};
+
 export default apiClient;

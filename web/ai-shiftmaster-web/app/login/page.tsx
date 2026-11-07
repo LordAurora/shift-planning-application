@@ -12,7 +12,7 @@ const { Title, Text } = Typography;
 const highlights = [
   'Schedules that respect rest periods and hour caps',
   'Preferences and days off built in',
-  'Real-time updates for managers and employees',
+  'One schedule for managers and employees, on web and mobile',
 ];
 
 export default function LoginPage() {
