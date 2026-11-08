@@ -11,7 +11,8 @@
 ![React](https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=black)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5-3178C6?logo=typescript&logoColor=white)
 ![Flutter](https://img.shields.io/badge/Flutter-3.x-02569B?logo=flutter&logoColor=white)
-![Tests](https://img.shields.io/badge/tests-pytest-0A9EDC?logo=pytest&logoColor=white)
+[![CI](https://github.com/LordAurora/shift-planning-application/actions/workflows/ci.yml/badge.svg)](https://github.com/LordAurora/shift-planning-application/actions/workflows/ci.yml)
+![Docker](https://img.shields.io/badge/Docker-Compose-2496ED?logo=docker&logoColor=white)
 ![License](https://img.shields.io/badge/License-MIT-green)
 
 <img src="docs/screenshots/landing-hero.png" alt="ShiftMaster AI landing page" width="100%">
@@ -30,8 +31,9 @@
 - [Tech Stack](#tech-stack)
 - [Repository Structure](#repository-structure)
 - [Getting Started](#getting-started)
+- [Run with Docker](#run-with-docker)
 - [Demo Data](#demo-data)
-- [Testing](#testing)
+- [Testing and CI](#testing-and-ci)
 - [API Reference](#api-reference)
 - [Data Model](#data-model)
 - [Security](#security)
@@ -48,7 +50,7 @@ ShiftMaster AI turns employee availability, shift preferences and labor rules in
 | --- | --- | --- |
 | **Web dashboard** (Next.js) | Admins, managers | Employees, shifts, rules, AI optimization, analytics |
 | **Mobile app** (Flutter) | Employees | Weekly shifts, leave requests, shift preferences, notifications, profile |
-| **REST API** (FastAPI) | Both clients | Auth, scheduling engine, business rules, real-time events, health and metrics |
+| **REST API** (FastAPI) | Both clients | Auth, scheduling engine, business rules, notifications, health and metrics |
 
 The web dashboard and the mobile app share the same branding, color palette (`#1E3A5F`) and terminology (Morning / Day / Evening / Night shifts), so managers and employees see one product.
 
@@ -93,9 +95,9 @@ The web dashboard and the mobile app share the same branding, color palette (`#1
 - Leave requests with balance tracking, an approval workflow and analytics.
 - A shift audit trail.
 
-### Analytics and real-time updates
+### Analytics and notifications
 - A dashboard computed on the server from real shift data, filterable by week or month.
-- Server-Sent Events (`/events/stream`) with a polling fallback.
+- An event-stream API (`/events/stream`, Server-Sent Events with a polling fallback) for clients that need live updates.
 - An in-app notification center, plus push notifications on mobile.
 
 ### Mobile app (Flutter)
@@ -160,7 +162,6 @@ flowchart LR
     W -- "HTTPS / JSON" --> MW
     M -- "HTTPS / JSON" --> MW
     MW --> R --> D --> DB
-    E -. "real-time" .-> W
     D --> Q --> C
     C --> F -. "push" .-> M
 ```
@@ -195,7 +196,8 @@ sequenceDiagram
 | **Database** | PostgreSQL (GaussDB-compatible) |
 | **Web** | Next.js 16 (App Router), React 19, TypeScript, Ant Design 6, Tailwind CSS 4, Zustand, Axios, Recharts, Day.js, SheetJS |
 | **Mobile** | Flutter / Dart, Provider, Dio, go_router, sqflite, flutter_secure_storage, connectivity_plus, Firebase Messaging |
-| **Quality** | pytest, ESLint, TypeScript strict mode |
+| **Quality** | pytest (unit + API tests), ESLint, TypeScript strict mode, GitHub Actions |
+| **Delivery** | Docker, Docker Compose |
 
 ---
 
@@ -214,7 +216,8 @@ shift-planning-application/
 │   │   ├── scripts/              # seed_demo_data.py + synthetic dataset
 │   │   ├── tasks/                # Celery background jobs
 │   │   └── utils/                # Hashing and JWT helpers
-│   └── tests/                    # Optimizer unit tests
+│   ├── tests/                    # Optimizer unit tests and API tests
+│   └── Dockerfile
 ├── web/ai-shiftmaster-web/       # Next.js dashboard and landing page
 │   └── app/
 │       ├── landing/  login/  register/
@@ -223,6 +226,8 @@ shift-planning-application/
 ├── employee_shift_mobile/        # Flutter employee app
 │   └── lib/  core/  data/  providers/  services/  presentation/
 ├── docs/                         # Screenshots and extended architecture notes
+├── docker-compose.yml            # PostgreSQL + API + web in one command
+├── .github/workflows/ci.yml      # Tests, migrations, lint, build, Docker
 └── LICENSE
 ```
 
@@ -233,7 +238,7 @@ shift-planning-application/
 ### Prerequisites
 
 - **Python** 3.10+
-- **Node.js** 18+
+- **Node.js** 20.9+ (required by Next.js 16)
 - **PostgreSQL** 14+
 - **Flutter SDK** 3.x (only for the mobile app)
 - **Redis** (optional, only for Celery background jobs)
@@ -293,6 +298,21 @@ flutter run
 
 ---
 
+## Run with Docker
+
+```bash
+docker compose up --build
+```
+
+This starts PostgreSQL, the API (it runs the migrations and loads the demo workforce on startup) and the web dashboard:
+
+- Web: **http://localhost:3000**. Sign in with `admin@example.com` / `admin123`.
+- API docs: **http://localhost:8000/docs**
+
+Set `SECRET_KEY` in your environment before using the stack for anything other than local development.
+
+---
+
 ## Demo Data
 
 All people in the demo workforce are **fictional**. [`seed_demo_data.py`](backend/app/scripts/seed_demo_data.py) loads 200 synthetic employees from [`demo_employees.json`](backend/app/scripts/data/demo_employees.json). Names are random combinations of common first and last names, and every email uses `example.com`. Each employee has a role, a department, a preferred shift, a weekly day off and a work model. The script is idempotent: running it again updates the existing records.
@@ -307,7 +327,7 @@ On first startup, the backend also creates these development accounts. Change or
 
 ---
 
-## Testing
+## Testing and CI
 
 ```bash
 cd backend
@@ -315,7 +335,19 @@ pip install -r requirements-dev.txt
 python -m pytest tests -q
 ```
 
-The optimizer suite covers one shift per day, weekly hour caps, operating days, days off, minimum rest, the use of existing shifts, the effect of preferences, understaffing warnings and deterministic output.
+There are 23 tests in two groups:
+
+- **Optimizer unit tests** cover one shift per day, weekly hour caps, operating days, days off, minimum rest, existing shifts (counted towards hours and slots), the effect of preferences, understaffing warnings and deterministic output.
+- **API tests** run the real FastAPI app against a temporary SQLite database. They cover sign-in, role protection, the sign-up role rules, employees and preferences, shift rules, and the full flow of optimizing, saving and re-running a week. They never touch the database configured in `.env`.
+
+Every push runs the [CI pipeline](.github/workflows/ci.yml):
+
+| Job | What it checks |
+| --- | --- |
+| Backend · tests | The full pytest suite |
+| Backend · migrations | `alembic upgrade head`, `alembic check` (models match migrations), a downgrade/upgrade round trip and an idempotent seed, all on PostgreSQL 16 |
+| Web | ESLint, the TypeScript type check and a production `next build` |
+| Docker | Building the images with `docker compose build` |
 
 ---
 
@@ -327,7 +359,7 @@ All business endpoints are served under `/api/v1`. When the backend is running, 
 | --- | --- |
 | **Auth** | `POST /auth/login` · `POST /auth/register` · `POST /auth/refresh` · `POST /auth/logout` · `GET /auth/me` |
 | **Dashboard** | `GET /dashboard/summary?start_date&end_date` |
-| **Employees** | `GET/POST /employees` · `GET/PUT/DELETE /employees/{id}` |
+| **Employees** | `GET/POST /employees` · `GET/PUT/DELETE /employees/{id}` · `GET/PUT /employees/me/preferences` |
 | **Departments** | `GET/POST /departments` · `GET/PUT/DELETE /departments/{id}` |
 | **Shifts** | `GET/POST /shifts` · `GET/PUT/DELETE /shifts/{id}` · `GET /shifts/conflicts` · `POST /shifts/bulk` |
 | **Shifts v2** | `GET /shifts/v2/validate/{employee_id}` · `POST /shifts/v2/optimized` · `GET /shifts/v2/recommendations/{department_id}` · `PUT /shifts/v2/{id}/soft-delete` · `GET /shifts/v2/audit/{id}` |
@@ -407,9 +439,13 @@ The schema is versioned with Alembic. There are four migrations, and they are te
 
 ## Roadmap
 
-- [ ] Add API integration tests and Playwright end-to-end tests, and run them in a CI pipeline.
-- [ ] Add Docker Compose for one-command local setup.
-- [ ] Add multi-tenant workspaces for self-service company sign-up.
+- [x] Constraint-aware optimizer with explainable metrics
+- [x] Live dashboard, shift rules and sign-up connected to the API
+- [x] Mobile preferences saved through the API and used by the optimizer
+- [x] Unit tests, API tests and a CI pipeline
+- [x] Docker Compose setup
+- [ ] Browser end-to-end tests (Playwright) and a Flutter build in CI
+- [ ] Multi-tenant workspaces, so each company that signs up gets its own data
 
 ---
 
