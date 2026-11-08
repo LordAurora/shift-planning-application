@@ -1,0 +1,46 @@
+# One-command local setup: PostgreSQL + API + web dashboard
+#   docker compose up --build
+# Web: http://localhost:3000   API docs: http://localhost:8000/docs
+
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: shiftmaster
+      POSTGRES_PASSWORD: shiftmaster
+      POSTGRES_DB: shiftmaster
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U shiftmaster -d shiftmaster"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  backend:
+    build: ./backend
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql://shiftmaster:shiftmaster@db:5432/shiftmaster
+      SECRET_KEY: ${SECRET_KEY:-change-me-for-anything-but-local-development}
+      CORS_ORIGINS: http://localhost:3000
+      ENVIRONMENT: development
+      DEBUG: "false"
+      SEED_DEMO_DATA: "true"
+    ports:
+      - "8000:8000"
+
+  web:
+    build:
+      context: ./web/ai-shiftmaster-web
+      args:
+        NEXT_PUBLIC_API_URL: http://localhost:8000/api/v1
+    depends_on:
+      - backend
+    ports:
+      - "3000:3000"
+
+volumes:
+  db-data:
