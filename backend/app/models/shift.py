@@ -2,6 +2,7 @@ from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Enum as SQ
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from app.database import Base
+from app.tenancy import TenantScoped
 import enum
 
 
@@ -11,7 +12,7 @@ class ShiftStatus(str, enum.Enum):
     CANCELLED = "cancelled"
 
 
-class Shift(Base):
+class Shift(TenantScoped, Base):
     """Shift model"""
     __tablename__ = "shifts"
     __table_args__ = (

@@ -2,9 +2,10 @@ from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Time, Bool
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from app.database import Base
+from app.tenancy import TenantScoped
 
 
-class ShiftRule(Base):
+class ShiftRule(TenantScoped, Base):
     """Shift rule model for defining shift requirements"""
     __tablename__ = "shift_rules"
     __table_args__ = (

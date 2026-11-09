@@ -3,6 +3,7 @@ from typing import Optional
 from jose import JWTError, jwt
 from passlib.context import CryptContext
 from fastapi import Depends, HTTPException, status
+from app.tenancy import bind_tenant, unscoped
 from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy.orm import Session
 from app.config import settings
@@ -71,11 +72,13 @@ async def get_current_user(
     if token_data is None:
         raise credentials_exception
     
-    user = db.query(User).filter(User.email == token_data.email).first()
+    user = unscoped(db.query(User).filter(User.email == token_data.email)).first()
     if user is None:
         raise credentials_exception
     if not user.is_active:
         raise HTTPException(status_code=400, detail="Inactive user")
+    # From here on, every query in this request only sees the user's organization
+    bind_tenant(db, user.organization_id)
     return user
 
 

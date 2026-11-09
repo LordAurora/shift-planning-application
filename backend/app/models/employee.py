@@ -2,9 +2,10 @@ from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, JSON, Floa
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from app.database import Base
+from app.tenancy import TenantScoped
 
 
-class Employee(Base):
+class Employee(TenantScoped, Base):
     """Employee model"""
     __tablename__ = "employees"
     __table_args__ = (

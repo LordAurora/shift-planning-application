@@ -3,6 +3,7 @@ from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
 from datetime import timedelta
 from app.database import get_db
+from app.models.organization import Organization
 from app.models.user import User, UserRole
 from app.schemas.user import (
     Token, 
@@ -19,6 +20,20 @@ from app.utils.security import (
 from app.config import settings
 
 router = APIRouter(prefix="/auth", tags=["Authentication"])
+
+
+def _user_response(user: User) -> UserResponse:
+    return UserResponse(
+        id=user.id,
+        email=user.email,
+        name=user.name,
+        role=user.role,
+        is_active=user.is_active,
+        organization_id=user.organization_id,
+        organization_name=user.organization.name if user.organization else None,
+        created_at=user.created_at,
+        updated_at=user.updated_at,
+    )
 
 
 @router.post("/login", response_model=Token)
@@ -51,15 +66,7 @@ async def login(
     return Token(
         access_token=access_token,
         token_type="bearer",
-        user=UserResponse(
-            id=user.id,
-            email=user.email,
-            name=user.name,
-            role=user.role,
-            is_active=user.is_active,
-            created_at=user.created_at,
-            updated_at=user.updated_at
-        )
+        user=_user_response(user)
     )
 
 
@@ -82,30 +89,14 @@ async def refresh_token(current_user: User = Depends(get_current_user)):
     return Token(
         access_token=access_token,
         token_type="bearer",
-        user=UserResponse(
-            id=current_user.id,
-            email=current_user.email,
-            name=current_user.name,
-            role=current_user.role,
-            is_active=current_user.is_active,
-            created_at=current_user.created_at,
-            updated_at=current_user.updated_at
-        )
+        user=_user_response(current_user)
     )
 
 
 @router.get("/me", response_model=UserResponse)
 async def get_current_user_info(current_user: User = Depends(get_current_user)):
     """Get current user information"""
-    return UserResponse(
-        id=current_user.id,
-        email=current_user.email,
-        name=current_user.name,
-        role=current_user.role,
-        is_active=current_user.is_active,
-        created_at=current_user.created_at,
-        updated_at=current_user.updated_at
-    )
+    return _user_response(current_user)
 
 
 @router.post("/register", response_model=UserResponse, status_code=status.HTTP_201_CREATED)
@@ -114,11 +105,10 @@ async def register(
     db: Session = Depends(get_db)
 ):
     """
-    Self-service sign-up.
+    Self-service sign-up for a new company.
 
-    The role cannot be chosen by the client: the very first account becomes the
-    administrator (bootstrap), every later sign-up is an employee. Elevated roles
-    are granted by an administrator.
+    Creates an organization (workspace) and its first administrator. The client
+    cannot choose a role. Employees join a workspace when an administrator adds them.
     """
     existing_user = db.query(User).filter(User.email == user_data.email).first()
     if existing_user:
@@ -127,24 +117,20 @@ async def register(
             detail="Email already registered"
         )
 
-    is_first_user = db.query(User).count() == 0
+    organization = Organization(name=user_data.company_name.strip())
+    db.add(organization)
+    db.flush()
+
     user = User(
         email=user_data.email,
         name=user_data.name,
         hashed_password=get_password_hash(user_data.password),
-        role=UserRole.ADMIN if is_first_user else UserRole.EMPLOYEE,
+        role=UserRole.ADMIN,
+        organization_id=organization.id,
     )
 
     db.add(user)
     db.commit()
     db.refresh(user)
     
-    return UserResponse(
-        id=user.id,
-        email=user.email,
-        name=user.name,
-        role=user.role,
-        is_active=user.is_active,
-        created_at=user.created_at,
-        updated_at=user.updated_at
-    )
+    return _user_response(user)

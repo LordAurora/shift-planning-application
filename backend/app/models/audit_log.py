@@ -1,9 +1,10 @@
 from sqlalchemy import Column, Integer, String, DateTime, Text, JSON, Index
 from sqlalchemy.sql import func
 from app.database import Base
+from app.tenancy import TenantScoped
 
 
-class AuditLog(Base):
+class AuditLog(TenantScoped, Base):
     """Audit log model for tracking changes"""
     __tablename__ = "audit_logs"
     __table_args__ = (

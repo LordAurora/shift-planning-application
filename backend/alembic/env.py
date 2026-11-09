@@ -23,6 +23,7 @@ from app.models.shift_rule import ShiftRule
 from app.models.notification import Notification
 from app.models.audit_log import AuditLog
 from app.models.leave_request import LeaveRequest
+from app.models.organization import Organization
 
 # this is the Alembic Config object
 config = context.config

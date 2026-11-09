@@ -14,6 +14,8 @@ from app.models.shift import Shift
 from app.models.shift_rule import ShiftRule
 from app.models.notification import Notification
 from app.models.audit_log import AuditLog
+from app.models.organization import get_or_create_demo_organization
+from app.tenancy import bind_tenant
 from app.models.leave_request import LeaveRequest  # noqa: F401
 from app.utils.security import get_password_hash
 
@@ -41,6 +43,9 @@ def create_initial_data(db):
     admin = db.query(User).filter(User.email == "admin@example.com").first()
     if admin:
         return  # Data already exists
+
+    # Development accounts live in the demo workspace
+    bind_tenant(db, get_or_create_demo_organization(db).id)
     
     # Create admin user
     admin = User(
@@ -192,14 +197,14 @@ def create_initial_data(db):
     from app.models.notification import NotificationType
     notifications_data = [
         {
-            "user_id": 1,  # Admin user
+            "user_id": admin.id,
             "title": "Welcome to ShiftMaster AI",
             "message": "Your account has been set up successfully. Start by exploring the dashboard.",
             "type": NotificationType.INFO,
             "is_read": False
         },
         {
-            "user_id": 1,
+            "user_id": admin.id,
             "title": "New Shift Rule Created",
             "message": "Morning Shift - Engineering rule has been created and activated.",
             "type": NotificationType.SUCCESS,

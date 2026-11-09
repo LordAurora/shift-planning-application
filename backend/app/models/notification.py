@@ -2,6 +2,7 @@ from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Enum as SQ
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from app.database import Base
+from app.tenancy import TenantScoped
 import enum
 
 
@@ -12,7 +13,7 @@ class NotificationType(str, enum.Enum):
     SUCCESS = "success"
 
 
-class Notification(Base):
+class Notification(TenantScoped, Base):
     """Notification model"""
     __tablename__ = "notifications"
     __table_args__ = (

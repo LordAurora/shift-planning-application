@@ -21,7 +21,8 @@ class UserCreate(UserBase):
 
 
 class RegisterRequest(BaseModel):
-    """Public self-service sign-up. The role is decided by the server."""
+    """Public sign-up: creates a new company workspace with this person as its admin."""
+    company_name: str = Field(..., min_length=2, max_length=255)
     email: EmailStr
     name: str = Field(..., min_length=2, max_length=255)
     password: str = Field(..., min_length=8, max_length=128)
@@ -37,6 +38,8 @@ class UserUpdate(BaseModel):
 class UserResponse(UserBase):
     id: int
     is_active: bool
+    organization_id: Optional[int] = None
+    organization_name: Optional[str] = None
     created_at: datetime
     updated_at: datetime
 

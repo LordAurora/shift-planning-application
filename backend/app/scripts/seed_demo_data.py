@@ -4,7 +4,7 @@ Seed (or refresh) the synthetic demo workforce.
 All people in data/demo_employees.json are fictional: names are random
 combinations of common first and last names, emails use example.com.
 
-The script is idempotent:
+Everything is written to the "Demo Company" workspace. The script is idempotent:
     * departments are created when missing
     * legacy department names are merged into their English counterparts
       (employees, shifts and rules are moved before the old row is removed)
@@ -21,8 +21,10 @@ from pathlib import Path
 from app.database import SessionLocal
 from app.models.department import Department
 from app.models.employee import Employee
+from app.models.organization import get_or_create_demo_organization
 from app.models.shift import Shift
 from app.models.shift_rule import ShiftRule
+from app.tenancy import bind_tenant
 
 DATA_FILE = Path(__file__).parent / "data" / "demo_employees.json"
 
@@ -90,6 +92,8 @@ def seed(dry_run: bool = False) -> None:
     people = json.loads(DATA_FILE.read_text(encoding="utf-8"))
     db = SessionLocal()
     try:
+        # All demo data belongs to the demo workspace
+        bind_tenant(db, get_or_create_demo_organization(db).id)
         departments = ensure_departments(db)
         existing = {e.email: e for e in db.query(Employee).all()}
         created = updated = 0

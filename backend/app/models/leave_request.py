@@ -2,6 +2,7 @@ from sqlalchemy import Column, Integer, Text, Date, DateTime, Enum as SQLEnum, F
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from app.database import Base
+from app.tenancy import TenantScoped
 import enum
 
 
@@ -19,7 +20,7 @@ class LeaveStatus(str, enum.Enum):
     REJECTED = "rejected"
 
 
-class LeaveRequest(Base):
+class LeaveRequest(TenantScoped, Base):
     """Leave request model"""
 
     __tablename__ = "leave_requests"

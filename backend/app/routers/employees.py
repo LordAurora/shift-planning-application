@@ -14,6 +14,7 @@ from app.schemas.employee import (
     EmployeeListResponse,
     EmployeePreferences,
 )
+from app.tenancy import unscoped
 from app.utils.security import get_current_user, require_role
 
 router = APIRouter(prefix="/employees", tags=["Employees"])
@@ -149,7 +150,7 @@ async def create_employee(
 ):
     """Create a new employee with user account for mobile app login"""
     # Check if email already exists in employees
-    existing_employee = db.query(Employee).filter(Employee.email == employee_data.email).first()
+    existing_employee = unscoped(db.query(Employee).filter(Employee.email == employee_data.email)).first()
     if existing_employee:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -157,7 +158,7 @@ async def create_employee(
         )
     
     # Check if email already exists in users
-    existing_user = db.query(User).filter(User.email == employee_data.email).first()
+    existing_user = unscoped(db.query(User).filter(User.email == employee_data.email)).first()
     if existing_user:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -262,6 +263,12 @@ async def update_employee(
                 detail="Department not found"
             )
     
+    # Emails are login identities and must be unique across all organizations
+    if "email" in update_data and update_data["email"] != employee.email:
+        taken = unscoped(db.query(User).filter(User.email == update_data["email"])).first()
+        if taken:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Email already registered")
+
     # Update user email/name if changed
     if "email" in update_data or "name" in update_data:
         user = db.query(User).filter(User.email == employee.email).first()

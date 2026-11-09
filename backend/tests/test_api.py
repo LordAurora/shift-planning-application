@@ -27,25 +27,42 @@ def test_me_returns_current_user(client, admin_headers):
     response = client.get(f"{API}/auth/me", headers=admin_headers)
     assert response.status_code == 200
     assert response.json()["role"] == "admin"
+    assert response.json()["organization_name"] == "Demo Company"
 
 
 def test_protected_endpoint_requires_token(client):
     assert client.get(f"{API}/employees").status_code in (401, 403)
 
 
-def test_register_cannot_choose_admin_role(client):
+def test_register_creates_workspace_and_ignores_requested_role(client):
     response = client.post(
         f"{API}/auth/register",
-        json={"email": "new.person@example.com", "name": "New Person", "password": "password123", "role": "admin"},
+        json={
+            "company_name": "Acme Logistics",
+            "email": "owner@acme.example.com",
+            "name": "Ada Owner",
+            "password": "password123",
+            "role": "employee",
+        },
     )
     assert response.status_code == 201, response.text
-    assert response.json()["role"] == "employee"
+    body = response.json()
+    assert body["role"] == "admin"  # the founder administers their own workspace
+    assert body["organization_name"] == "Acme Logistics"
+
+
+def test_register_requires_company_name(client):
+    response = client.post(
+        f"{API}/auth/register",
+        json={"email": "nocompany@example.com", "name": "No Company", "password": "password123"},
+    )
+    assert response.status_code == 422
 
 
 def test_register_rejects_duplicate_email(client):
     response = client.post(
         f"{API}/auth/register",
-        json={"email": "admin@example.com", "name": "Someone", "password": "password123"},
+        json={"company_name": "Dup Inc", "email": "admin@example.com", "name": "Someone", "password": "password123"},
     )
     assert response.status_code == 400
 
@@ -53,7 +70,7 @@ def test_register_rejects_duplicate_email(client):
 def test_register_validates_password_length(client):
     response = client.post(
         f"{API}/auth/register",
-        json={"email": "short@example.com", "name": "Short", "password": "123"},
+        json={"company_name": "Short Co", "email": "short@example.com", "name": "Short", "password": "123"},
     )
     assert response.status_code == 422
 
