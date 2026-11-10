@@ -219,8 +219,9 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
                 />
                 <div style={{ display: 'flex', flexDirection: 'column', lineHeight: 1.2 }}>
                   <Text style={{ fontWeight: 500 }}>{user?.name}</Text>
-                  <Text type="secondary" style={{ fontSize: 12, textTransform: 'capitalize' }}>
-                    {user?.role}
+                  <Text type="secondary" style={{ fontSize: 12 }}>
+                    <span style={{ textTransform: 'capitalize' }}>{user?.role}</span>
+                    {user?.organization_name ? ` · ${user.organization_name}` : ''}
                   </Text>
                 </div>
               </div>

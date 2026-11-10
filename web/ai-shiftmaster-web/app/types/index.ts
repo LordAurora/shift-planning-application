@@ -3,6 +3,8 @@ export interface User {
   email: string;
   name: string;
   role: 'admin' | 'manager' | 'employee';
+  organization_id?: number;
+  organization_name?: string;
 }
 
 export interface Employee {

@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Alert, Button, Checkbox, Form, Input, Typography, message } from 'antd';
-import { CheckCircleFilled, LockOutlined, MailOutlined, UserOutlined } from '@ant-design/icons';
+import { BankOutlined, CheckCircleFilled, LockOutlined, MailOutlined, UserOutlined } from '@ant-design/icons';
 import axios from 'axios';
 import { authService } from '../lib/services';
 import { useAuthStore } from '../store/authStore';
@@ -12,6 +12,7 @@ import { useAuthStore } from '../store/authStore';
 const { Title, Text } = Typography;
 
 interface RegisterForm {
+  company_name: string;
   name: string;
   email: string;
   password: string;
@@ -24,6 +25,7 @@ const highlights = [
   'Labor rules and rest periods enforced automatically',
   'Employee preferences built into every plan',
   'Mobile app for shifts, leave and notifications',
+  'Your company data stays in its own private workspace',
 ];
 
 export default function RegisterPage() {
@@ -36,8 +38,13 @@ export default function RegisterPage() {
     setLoading(true);
     setError(null);
     try {
-      await authService.register({ name: values.name, email: values.email, password: values.password });
-      message.success('Account created. Signing you in…');
+      await authService.register({
+        company_name: values.company_name,
+        name: values.name,
+        email: values.email,
+        password: values.password,
+      });
+      message.success('Workspace created. Signing you in…');
       const ok = await login(values.email, values.password);
       router.push(ok ? '/dashboard' : '/login');
     } catch (err) {
@@ -60,17 +67,20 @@ export default function RegisterPage() {
             ))}
           </ul>
         </div>
-        <p className="auth-foot">Your workspace is ready the moment you sign up.</p>
+        <p className="auth-foot">Add your team after sign-up; employees sign in with the accounts you create.</p>
       </aside>
 
       <main className="auth-panel">
         <div className="auth-card">
-          <Title level={2} style={{ marginBottom: 4 }}>Create your account</Title>
-          <Text type="secondary">Start planning shifts in minutes.</Text>
+          <Title level={2} style={{ marginBottom: 4 }}>Create your workspace</Title>
+          <Text type="secondary">A private workspace for your company. You will be its administrator.</Text>
 
           {error && <Alert type="error" showIcon title={error} style={{ marginTop: 24 }} />}
 
           <Form<RegisterForm> layout="vertical" size="large" requiredMark={false} onFinish={onFinish} style={{ marginTop: 24 }}>
+            <Form.Item name="company_name" label="Company name" rules={[{ required: true, min: 2, message: 'Enter your company name' }]}>
+              <Input prefix={<BankOutlined />} placeholder="Acme Logistics" autoComplete="organization" />
+            </Form.Item>
             <Form.Item name="name" label="Full name" rules={[{ required: true, min: 2, message: 'Enter your name' }]}>
               <Input prefix={<UserOutlined />} placeholder="Jane Cooper" autoComplete="name" />
             </Form.Item>
@@ -107,7 +117,7 @@ export default function RegisterPage() {
             >
               <Checkbox>I agree to the Terms of Service and Privacy Policy</Checkbox>
             </Form.Item>
-            <Button type="primary" htmlType="submit" block loading={loading}>Create account</Button>
+            <Button type="primary" htmlType="submit" block loading={loading}>Create workspace</Button>
           </Form>
 
           <div style={{ textAlign: 'center', marginTop: 24 }}>

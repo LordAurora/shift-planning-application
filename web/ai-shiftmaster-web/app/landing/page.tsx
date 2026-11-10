@@ -370,9 +370,9 @@ export default function LandingPage() {
       <section className="lp-cta">
         <div className="lp-container lp-cta-inner reveal">
           <h2>Plan next week before your coffee gets cold.</h2>
-          <p>Explore the demo workspace with 200 synthetic employees, or create your own account.</p>
+          <p>Explore the demo workspace with 200 synthetic employees, or create a private workspace for your company.</p>
           <div className="lp-hero-cta">
-            <Link href="/register" className="lp-btn lp-btn-white lp-btn-lg">Create account <ArrowRightOutlined /></Link>
+            <Link href="/register" className="lp-btn lp-btn-white lp-btn-lg">Create your workspace <ArrowRightOutlined /></Link>
             <Link href="/login" className="lp-btn lp-btn-outline-light lp-btn-lg"><TeamOutlined /> Open the demo</Link>
           </div>
         </div>
