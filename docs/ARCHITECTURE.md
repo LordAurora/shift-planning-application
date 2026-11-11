@@ -31,6 +31,7 @@ Both clients talk to the same REST API (`/api/v1`) over JSON with JWT bearer tok
 | `002_add_leave_requests` | Leave requests |
 | `003_performance_indexes` | Indexes for calendar, per-employee and audit queries |
 | `004_employee_preferences` | `employees.preferences` (preferred shift, day off, work model) |
+| `005_organizations` | Organizations; `organization_id` on all tenant tables; existing data moved to "Demo Company" |
 
 ## 3. Scheduling engine
 
@@ -59,8 +60,18 @@ The engine has no framework dependencies and is covered by [`tests/test_schedule
 - **SyncService:** connectivity-aware sync that runs every 5 minutes with up to 5 retries. When local and server data conflict, the server version wins. While offline, changes are queued.
 - **Preferences:** saved with `GET/PUT /employees/me/preferences`, which reads and writes the same field the optimizer uses.
 
-## 6. Security model
+## 6. Multi-tenancy
+
+- Every company that signs up gets an `organizations` row. All business tables carry a required `organization_id` (migration `005`).
+- [`app/tenancy.py`](../backend/app/tenancy.py) defines the `TenantScoped` mixin and two SQLAlchemy session hooks:
+  - `do_orm_execute` adds `with_loader_criteria(TenantScoped, organization_id == <tenant>)` to ORM selects, updates and deletes.
+  - `before_flush` stamps new rows with the session's organization, and refuses to save a row that has no organization.
+- `get_current_user` binds the user's organization to the request session with `bind_tenant`. Requests that aren't authenticated (login, sign-up) are not bound.
+- Cross-tenant lookups are explicit, via `unscoped(query)`. They are used only to keep login emails globally unique.
+- [`tests/test_tenancy.py`](../backend/tests/test_tenancy.py) checks the isolation guarantees through the public API.
+
+## 7. Security model
 
 - JWT access tokens and bcrypt password hashes.
-- Roles: `admin`, `manager`, `employee`. Self-service sign-up cannot choose a role; the first account becomes the administrator.
+- Roles: `admin`, `manager`, `employee`. Sign-up creates a new workspace whose founder is its administrator; the client cannot choose a role.
 - Secrets live only in environment variables, and `.env` files are git-ignored.

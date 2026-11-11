@@ -35,6 +35,7 @@
 - [Demo Data](#demo-data)
 - [Testing and CI](#testing-and-ci)
 - [API Reference](#api-reference)
+- [Multi-Tenancy](#multi-tenancy)
 - [Data Model](#data-model)
 - [Security](#security)
 - [Roadmap](#roadmap)
@@ -106,6 +107,7 @@ The web dashboard and the mobile app share the same branding, color palette (`#1
 - Secure token storage and push notifications.
 
 ### Platform
+- **Multi-tenant SaaS:** every company that signs up gets its own private workspace. Data isolation is enforced centrally on every database query (see [Multi-Tenancy](#multi-tenancy)).
 - JWT authentication with role-based access control (**Admin / Manager / Employee**).
 - Rate limiting, structured logging and security-header middleware.
 - Health, readiness and liveness probes, plus Prometheus-compatible `/metrics`.
@@ -196,7 +198,7 @@ sequenceDiagram
 | **Database** | PostgreSQL (GaussDB-compatible) |
 | **Web** | Next.js 16 (App Router), React 19, TypeScript, Ant Design 6, Tailwind CSS 4, Zustand, Axios, Recharts, Day.js, SheetJS |
 | **Mobile** | Flutter / Dart, Provider, Dio, go_router, sqflite, flutter_secure_storage, connectivity_plus, Firebase Messaging |
-| **Quality** | pytest (unit + API tests), ESLint, TypeScript strict mode, GitHub Actions |
+| **Quality** | pytest (unit, API and tenancy tests), Playwright (end-to-end), ESLint, TypeScript strict mode, GitHub Actions |
 | **Delivery** | Docker, Docker Compose |
 
 ---
@@ -206,7 +208,7 @@ sequenceDiagram
 ```text
 shift-planning-application/
 ├── backend/                      # FastAPI service
-│   ├── alembic/versions/         # 001 schema · 002 leave · 003 indexes · 004 preferences
+│   ├── alembic/versions/         # 001 schema · 002 leave · 003 indexes · 004 preferences · 005 organizations
 │   ├── app/
 │   │   ├── domain/services/      # schedule_optimizer.py, rule engine, leave, audit
 │   │   ├── middleware/           # Rate limiting, logging, security headers
@@ -335,10 +337,29 @@ pip install -r requirements-dev.txt
 python -m pytest tests -q
 ```
 
-There are 23 tests in two groups:
+The backend has **27 tests** in three groups:
 
 - **Optimizer unit tests** cover one shift per day, weekly hour caps, operating days, days off, minimum rest, existing shifts (counted towards hours and slots), the effect of preferences, understaffing warnings and deterministic output.
-- **API tests** run the real FastAPI app against a temporary SQLite database. They cover sign-in, role protection, the sign-up role rules, employees and preferences, shift rules, and the full flow of optimizing, saving and re-running a week. They never touch the database configured in `.env`.
+- **API tests** run the real FastAPI app against a temporary SQLite database. They cover sign-in, role protection, sign-up, employees and preferences, shift rules, and the full flow of optimizing, saving and re-running a week.
+- **Tenancy tests** prove that companies are isolated. A new workspace starts empty, records belonging to another company return `404`, foreign departments are rejected, and both the optimizer and the dashboard only see the caller’s own data.
+
+None of these tests ever touch the database configured in `.env`.
+
+### End-to-end tests (Playwright)
+
+```bash
+cd web/ai-shiftmaster-web
+npx playwright install chromium     # once; or use your local Chrome
+npm run test:e2e
+```
+
+The E2E suite starts its **own** API (port 8001) and web server (port 3001) with a throw-away SQLite database, then runs these scenarios in a real browser:
+
+- The landing page and the sign-up call to action
+- A wrong password, and the redirect from protected pages
+- Signing in with the demo account
+- A **new company** that signs up, starts with an empty workspace, adds an employee through the UI, then generates and saves a schedule. The test also confirms that another company cannot see this team.
+- Signing out
 
 Every push runs the [CI pipeline](.github/workflows/ci.yml):
 
@@ -347,6 +368,7 @@ Every push runs the [CI pipeline](.github/workflows/ci.yml):
 | Backend · tests | The full pytest suite |
 | Backend · migrations | `alembic upgrade head`, `alembic check` (models match migrations), a downgrade/upgrade round trip and an idempotent seed, all on PostgreSQL 16 |
 | Web | ESLint, the TypeScript type check and a production `next build` |
+| End-to-end | The Playwright suite against a production build, with the HTML report uploaded on failure |
 | Docker | Building the images with `docker compose build` |
 
 ---
@@ -398,10 +420,25 @@ The response includes `shifts` (each with `shift_type` and a `preferred` flag), 
 
 ---
 
+## Multi-Tenancy
+
+ShiftMaster AI is a multi-tenant SaaS. Each company works in its own **organization** (workspace):
+
+- **Sign-up creates a workspace.** The person who registers becomes that workspace’s administrator. Employees join when an administrator adds them; their accounts belong to the same organization.
+- **Isolation is enforced centrally, not per query.** Every tenant-owned table has an `organization_id`. After authentication, the user’s organization is attached to the request’s database session, and a SQLAlchemy `do_orm_execute` hook adds `organization_id = <tenant>` to every ORM select, update and delete, including joins and relationship loads. New rows are stamped automatically. A query added in the future cannot forget the filter (see [`app/tenancy.py`](backend/app/tenancy.py)).
+- **Explicit opt-out.** The only cross-tenant lookups are the checks that keep login emails unique across the whole system, and they are marked with `unscoped(...)`.
+- **Per-company names.** Department names are unique within a company, so two companies can both have an “Engineering” department.
+
+Existing data is moved into a **Demo Company** workspace by migration `005`. The development accounts and the synthetic workforce live there too.
+
+---
+
 ## Data Model
 
 ```mermaid
 erDiagram
+    ORGANIZATION ||--o{ USER : "has members"
+    ORGANIZATION ||--o{ DEPARTMENT : owns
     DEPARTMENT ||--o{ EMPLOYEE : employs
     DEPARTMENT ||--o{ SHIFT : schedules
     DEPARTMENT ||--o{ SHIFT_RULE : defines
@@ -413,6 +450,7 @@ erDiagram
 
 | Table | Description |
 | --- | --- |
+| `organizations` | Company workspaces; every row below belongs to one |
 | `users` | Login accounts and roles |
 | `departments` | Organizational units |
 | `employees` | Profiles, availability, weekly and overtime limits, and `preferences` (preferred shift, day off, work model) |
@@ -422,14 +460,15 @@ erDiagram
 | `notifications` | User notifications |
 | `audit_logs` | Change history for compliance |
 
-The schema is versioned with Alembic. There are four migrations, and they are tested both upgrading and downgrading.
+The schema is versioned with Alembic. There are five migrations, and they are tested both upgrading and downgrading.
 
 ---
 
 ## Security
 
 - Passwords are hashed with **bcrypt**. Tokens are signed JWTs with a configurable lifetime.
-- **Self-service sign-up cannot choose a role.** The very first account becomes the administrator; every later sign-up is an employee. Elevated roles are granted by an administrator.
+- **Sign-up creates a new workspace and cannot choose a role.** The founder becomes the administrator of their own company only. Joining an existing company requires an administrator to add you.
+- **Tenant isolation** is applied to every query by a central hook and covered by dedicated tests.
 - Role-based authorization is enforced on the API and, through middleware, on Next.js routes.
 - Request rate limiting and security headers are applied by middleware.
 - Secrets are read only from environment variables. `.env` files are git-ignored, and `.env.example` documents the required keys.
@@ -444,8 +483,10 @@ The schema is versioned with Alembic. There are four migrations, and they are te
 - [x] Mobile preferences saved through the API and used by the optimizer
 - [x] Unit tests, API tests and a CI pipeline
 - [x] Docker Compose setup
-- [ ] Browser end-to-end tests (Playwright) and a Flutter build in CI
-- [ ] Multi-tenant workspaces, so each company that signs up gets its own data
+- [x] Multi-tenant workspaces, so each company that signs up gets its own data
+- [x] Browser end-to-end tests (Playwright) in CI
+- [ ] Invite links, so employees can join a workspace on their own
+- [ ] A Flutter build and widget tests in CI
 
 ---
 
