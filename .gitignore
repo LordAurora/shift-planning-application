@@ -35,3 +35,7 @@ Thumbs.db
 
 # Local notes
 PROJECT_TECH_OVERVIEW.md
+
+# Playwright
+test-results/
+playwright-report/
