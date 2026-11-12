@@ -90,7 +90,7 @@ export function proxy(request: NextRequest) {
     );
     
     if (isAdminRoute && userRole !== 'admin' && userRole !== 'super_admin') {
-      return NextResponse.redirect(new URL('/dashboard', request.url));
+      return NextResponse.redirect(new URL('/forbidden', request.url));
     }
 
     // Check manager routes
@@ -99,7 +99,7 @@ export function proxy(request: NextRequest) {
     );
     
     if (isManagerRoute && !['admin', 'super_admin', 'manager'].includes(userRole)) {
-      return NextResponse.redirect(new URL('/dashboard', request.url));
+      return NextResponse.redirect(new URL('/forbidden', request.url));
     }
   }
 

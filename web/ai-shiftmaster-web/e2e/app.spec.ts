@@ -54,6 +54,22 @@ test.describe('public pages', () => {
   });
 });
 
+test.describe('error pages', () => {
+  test('unknown addresses show the 404 page', async ({ page }) => {
+    const response = await page.goto('/this-page-does-not-exist');
+    expect(response?.status()).toBe(404);
+    await expect(page.getByRole('heading', { name: /doesn.t exist/ })).toBeVisible();
+    await expect(page.getByRole('link', { name: 'Back to home' })).toBeVisible();
+  });
+
+  test('employees opening an admin page see the 403 page', async ({ page }) => {
+    await signIn(page, 'employee@example.com', 'employee123');
+    await page.goto('/employees');
+    await expect(page).toHaveURL(/\/forbidden/);
+    await expect(page.getByRole('heading', { name: /access to this page/ })).toBeVisible();
+  });
+});
+
 test('demo admin signs in and sees the dashboard', async ({ page }) => {
   await open(page, '/login');
   await page.getByRole('button', { name: 'Use the admin demo account' }).click();
