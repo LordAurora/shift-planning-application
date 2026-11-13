@@ -8,16 +8,19 @@ import {
   BarChartOutlined,
   BellOutlined,
   CalendarOutlined,
+  ApartmentOutlined,
   CheckCircleFilled,
   ClockCircleOutlined,
   CloudSyncOutlined,
   GithubOutlined,
   HeartOutlined,
+  LockOutlined,
   MobileOutlined,
   RobotOutlined,
   SafetyCertificateOutlined,
   TeamOutlined,
   ThunderboltOutlined,
+  UserAddOutlined,
 } from '@ant-design/icons';
 import './landing.css';
 
@@ -111,12 +114,12 @@ const FEATURES = [
 ];
 
 const STEPS = [
-  { n: '01', title: 'Set the rules', text: 'Define operating days, shift types, staffing ranges and labor limits per department.' },
-  { n: '02', title: 'Generate', text: 'The optimizer builds a full schedule and explains coverage, preference match and fairness.' },
-  { n: '03', title: 'Review & publish', text: 'Check warnings, export or save. Employees see their shifts instantly on mobile.' },
+  { n: '01', title: 'Create your workspace', text: 'Sign up with your company name. You become the administrator and add your team and departments.' },
+  { n: '02', title: 'Set rules & generate', text: 'Choose shift types, staffing ranges and labor limits. The optimizer builds the schedule and explains its trade-offs.' },
+  { n: '03', title: 'Review & publish', text: 'Check warnings, export or save. Employees see their shifts and set preferences in the mobile app.' },
 ];
 
-const STACK = ['FastAPI', 'PostgreSQL', 'SQLAlchemy', 'Next.js 16', 'React 19', 'TypeScript', 'Ant Design', 'Flutter', 'Celery', 'Redis'];
+const STACK = ['FastAPI', 'PostgreSQL', 'SQLAlchemy', 'Next.js 16', 'React 19', 'TypeScript', 'Ant Design', 'Flutter', 'Playwright', 'Docker', 'GitHub Actions'];
 
 export default function LandingPage() {
   const pageRef = useReveal();
@@ -142,6 +145,7 @@ export default function LandingPage() {
             <a href="#features">Features</a>
             <a href="#how">How it works</a>
             <a href="#mobile">Mobile</a>
+            <a href="#workspaces">Workspaces</a>
           </nav>
           <div className="lp-nav-cta">
             <Link href="/login" className="lp-btn lp-btn-ghost">Sign in</Link>
@@ -177,7 +181,7 @@ export default function LandingPage() {
             <ul className="lp-checks lp-fade" style={{ animationDelay: '320ms' }}>
               <li><CheckCircleFilled /> Rest periods enforced</li>
               <li><CheckCircleFilled /> Preferences built in</li>
-              <li><CheckCircleFilled /> Excel & CSV export</li>
+              <li><CheckCircleFilled /> Private company workspace</li>
             </ul>
           </div>
 
@@ -350,6 +354,51 @@ export default function LandingPage() {
                 ))}
               </div>
             </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ------------------------------------------------ Workspaces */}
+      <section className="lp-section lp-section-dark" id="workspaces">
+        <div className="lp-container lp-split">
+          <div className="lp-split-copy reveal">
+            <span className="lp-eyebrow lp-eyebrow-light">Built for companies</span>
+            <h2>Every company gets its own private workspace.</h2>
+            <p>
+              Sign up with your company name and you get a workspace that only your team can see. Data isolation
+              is enforced on every database query, not left to each screen, so one company can never see
+              another&rsquo;s people or schedules.
+            </p>
+            <ul className="lp-list lp-list-light">
+              <li><LockOutlined /> Isolated data for every company</li>
+              <li><UserAddOutlined /> The founder is the admin and adds the team</li>
+              <li><ApartmentOutlined /> Admin, manager and employee roles</li>
+              <li><MobileOutlined /> Employees sign in to the mobile app with the accounts you create</li>
+            </ul>
+          </div>
+          <div className="lp-tenants reveal" aria-hidden="true">
+            {[
+              { name: 'Acme Logistics', people: ['Hannah S.', 'Omar H.', 'Grace K.'], tint: 'lp-tenant-a' },
+              { name: 'Northwind Retail', people: ['Leo M.', 'Ines C.', 'Yuki T.'], tint: 'lp-tenant-b' },
+            ].map((t, i) => (
+              <div className={`lp-tenant ${t.tint}`} key={t.name} style={{ animationDelay: `${i * -3}s` }}>
+                <div className="lp-tenant-head">
+                  <span className="lp-tenant-logo">{t.name[0]}</span>
+                  <div>
+                    <strong>{t.name}</strong>
+                    <em>Private workspace</em>
+                  </div>
+                  <LockOutlined className="lp-tenant-lock" />
+                </div>
+                {t.people.map((person, j) => (
+                  <div className="lp-tenant-row" key={person}>
+                    <span>{person}</span>
+                    <span className={`lp-chip lp-chip-${['m', 'd', 'e'][(i + j) % 3]}`}>{['Morning', 'Day', 'Evening'][(i + j) % 3]}</span>
+                  </div>
+                ))}
+              </div>
+            ))}
+            <div className="lp-tenant-wall"><LockOutlined /> Isolated</div>
           </div>
         </div>
       </section>
