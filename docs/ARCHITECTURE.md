@@ -53,6 +53,7 @@ The engine has no framework dependencies and is covered by [`tests/test_schedule
 - [`app/lib/api.ts`](../web/ai-shiftmaster-web/app/lib/api.ts) is an Axios client that attaches the token and handles `401` responses. [`app/lib/services.ts`](../web/ai-shiftmaster-web/app/lib/services.ts) holds the typed API calls.
 - [`proxy.ts`](../web/ai-shiftmaster-web/proxy.ts) (Next.js 16 route middleware) protects routes by role, using cookies mirrored from the auth store.
 - Public pages are `/landing`, `/login` and `/register`. Everything else sits inside `DashboardLayout`.
+- Error handling: `app/not-found.tsx` (404), `app/forbidden` (403, where the route guard redirects users whose role isn't allowed), `app/error.tsx` (500 error boundary with retry) and `app/global-error.tsx` (when the root layout itself fails). All of them share `components/ErrorScreen.tsx`.
 
 ## 5. Mobile app
 

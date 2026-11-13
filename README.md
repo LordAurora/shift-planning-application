@@ -59,19 +59,30 @@ The web dashboard and the mobile app share the same branding, color palette (`#1
 
 ## Screenshots
 
-### Web
+### Scheduling
 
 | | |
 | --- | --- |
 | <img src="docs/screenshots/dashboard.png" alt="Dashboard"><br>**Dashboard:** KPIs, shifts by weekday, department mix, six-month trend and upcoming shifts, all computed from live data. | <img src="docs/screenshots/ai-optimization.png" alt="AI optimization"><br>**AI optimization:** a full week for 204 employees, with its score, coverage, preference match and fairness. |
 | <img src="docs/screenshots/employees.png" alt="Employees"><br>**Employees:** contract limits, roles and each person’s preferred shift and day off. | <img src="docs/screenshots/shifts.png" alt="Shifts"><br>**Shifts:** list and calendar views with conflict detection. |
-| <img src="docs/screenshots/rules.png" alt="Shift rules"><br>**Shift rules:** staffing requirements per department, role and day. | <img src="docs/screenshots/login.png" alt="Sign in"><br>**Sign in:** split-screen SaaS layout shared with the sign-up page. |
+| <img src="docs/screenshots/rules.png" alt="Shift rules"><br>**Shift rules:** staffing requirements per department, role and day. | <img src="docs/screenshots/new-workspace.png" alt="New company workspace"><br>**New company workspace:** a fresh sign-up starts empty, and the header shows the company name. |
+
+### Accounts and workspaces
+
+| | |
+| --- | --- |
+| <img src="docs/screenshots/register.png" alt="Create workspace"><br>**Sign-up:** creates a private workspace for the company. | <img src="docs/screenshots/login.png" alt="Sign in"><br>**Sign in:** split-screen SaaS layout with a one-click demo account. |
+
+### Error pages
+
+| | |
+| --- | --- |
+| <img src="docs/screenshots/error-404.png" alt="404 page"><br>**404:** unknown addresses. | <img src="docs/screenshots/error-403.png" alt="403 page"><br>**403:** shown when, for example, an employee opens an admin page. |
 
 <details>
-<summary><b>Sign-up, full landing page and mobile view</b></summary>
+<summary><b>Full landing page and mobile view</b></summary>
 
 <p align="center">
-  <img src="docs/screenshots/register.png" alt="Create account" width="80%">
   <img src="docs/screenshots/landing-full.png" alt="Full landing page" width="80%">
   <img src="docs/screenshots/landing-mobile.png" alt="Landing page on mobile" width="300">
 </p>
@@ -107,6 +118,7 @@ The web dashboard and the mobile app share the same branding, color palette (`#1
 - Secure token storage and push notifications.
 
 ### Platform
+- **Custom error pages:** 404 (not found), 403 (role not allowed: the route guard sends users here instead of silently redirecting) and 500 (an error boundary with a retry button, plus a fallback for errors in the root layout).
 - **Multi-tenant SaaS:** every company that signs up gets its own private workspace. Data isolation is enforced centrally on every database query (see [Multi-Tenancy](#multi-tenancy)).
 - JWT authentication with role-based access control (**Admin / Manager / Employee**).
 - Rate limiting, structured logging and security-header middleware.
@@ -357,6 +369,7 @@ The E2E suite starts its **own** API (port 8001) and web server (port 3001) with
 
 - The landing page and the sign-up call to action
 - A wrong password, and the redirect from protected pages
+- The 404 page for unknown addresses, and the 403 page when an employee opens an admin page
 - Signing in with the demo account
 - A **new company** that signs up, starts with an empty workspace, adds an employee through the UI, then generates and saves a schedule. The test also confirms that another company cannot see this team.
 - Signing out
