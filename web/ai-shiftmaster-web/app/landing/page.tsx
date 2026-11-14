@@ -119,7 +119,7 @@ const STEPS = [
   { n: '03', title: 'Review & publish', text: 'Check warnings, export or save. Employees see their shifts and set preferences in the mobile app.' },
 ];
 
-const STACK = ['FastAPI', 'PostgreSQL', 'SQLAlchemy', 'Next.js 16', 'React 19', 'TypeScript', 'Ant Design', 'Flutter', 'Playwright', 'Docker', 'GitHub Actions'];
+const STACK = ['FastAPI', 'PostgreSQL', 'SQLAlchemy', 'Next.js 16', 'React 19', 'TypeScript', 'Ant Design', 'Flutter', 'Playwright', 'Docker'];
 
 export default function LandingPage() {
   const pageRef = useReveal();

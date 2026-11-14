@@ -11,7 +11,6 @@
 ![React](https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=black)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5-3178C6?logo=typescript&logoColor=white)
 ![Flutter](https://img.shields.io/badge/Flutter-3.x-02569B?logo=flutter&logoColor=white)
-[![CI](https://github.com/LordAurora/shift-planning-application/actions/workflows/ci.yml/badge.svg)](https://github.com/LordAurora/shift-planning-application/actions/workflows/ci.yml)
 ![Docker](https://img.shields.io/badge/Docker-Compose-2496ED?logo=docker&logoColor=white)
 ![License](https://img.shields.io/badge/License-MIT-green)
 
@@ -33,7 +32,7 @@
 - [Getting Started](#getting-started)
 - [Run with Docker](#run-with-docker)
 - [Demo Data](#demo-data)
-- [Testing and CI](#testing-and-ci)
+- [Testing](#testing)
 - [API Reference](#api-reference)
 - [Multi-Tenancy](#multi-tenancy)
 - [Data Model](#data-model)
@@ -210,7 +209,7 @@ sequenceDiagram
 | **Database** | PostgreSQL (GaussDB-compatible) |
 | **Web** | Next.js 16 (App Router), React 19, TypeScript, Ant Design 6, Tailwind CSS 4, Zustand, Axios, Recharts, Day.js, SheetJS |
 | **Mobile** | Flutter / Dart, Provider, Dio, go_router, sqflite, flutter_secure_storage, connectivity_plus, Firebase Messaging |
-| **Quality** | pytest (unit, API and tenancy tests), Playwright (end-to-end), ESLint, TypeScript strict mode, GitHub Actions |
+| **Quality** | pytest (unit, API and tenancy tests), Playwright (end-to-end), ESLint, TypeScript strict mode |
 | **Delivery** | Docker, Docker Compose |
 
 ---
@@ -241,7 +240,6 @@ shift-planning-application/
 │   └── lib/  core/  data/  providers/  services/  presentation/
 ├── docs/                         # Screenshots and extended architecture notes
 ├── docker-compose.yml            # PostgreSQL + API + web in one command
-├── .github/workflows/ci.yml      # Tests, migrations, lint, build, Docker
 └── LICENSE
 ```
 
@@ -341,7 +339,7 @@ On first startup, the backend also creates these development accounts. Change or
 
 ---
 
-## Testing and CI
+## Testing
 
 ```bash
 cd backend
@@ -373,16 +371,6 @@ The E2E suite starts its **own** API (port 8001) and web server (port 3001) with
 - Signing in with the demo account
 - A **new company** that signs up, starts with an empty workspace, adds an employee through the UI, then generates and saves a schedule. The test also confirms that another company cannot see this team.
 - Signing out
-
-Every push runs the [CI pipeline](.github/workflows/ci.yml):
-
-| Job | What it checks |
-| --- | --- |
-| Backend · tests | The full pytest suite |
-| Backend · migrations | `alembic upgrade head`, `alembic check` (models match migrations), a downgrade/upgrade round trip and an idempotent seed, all on PostgreSQL 16 |
-| Web | ESLint, the TypeScript type check and a production `next build` |
-| End-to-end | The Playwright suite against a production build, with the HTML report uploaded on failure |
-| Docker | Building the images with `docker compose build` |
 
 ---
 
@@ -473,7 +461,7 @@ erDiagram
 | `notifications` | User notifications |
 | `audit_logs` | Change history for compliance |
 
-The schema is versioned with Alembic. There are five migrations, and they are tested both upgrading and downgrading.
+The schema is versioned with Alembic. There are five migrations, and each one can be upgraded and downgraded.
 
 ---
 
@@ -494,12 +482,12 @@ The schema is versioned with Alembic. There are five migrations, and they are te
 - [x] Constraint-aware optimizer with explainable metrics
 - [x] Live dashboard, shift rules and sign-up connected to the API
 - [x] Mobile preferences saved through the API and used by the optimizer
-- [x] Unit tests, API tests and a CI pipeline
+- [x] Unit and API tests
 - [x] Docker Compose setup
 - [x] Multi-tenant workspaces, so each company that signs up gets its own data
-- [x] Browser end-to-end tests (Playwright) in CI
+- [x] Browser end-to-end tests (Playwright)
 - [ ] Invite links, so employees can join a workspace on their own
-- [ ] A Flutter build and widget tests in CI
+- [ ] Flutter widget tests
 
 ---
 
